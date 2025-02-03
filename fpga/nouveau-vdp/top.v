@@ -18,8 +18,13 @@
 //    USA
 //
 //**************************************************************************
+// Don't allow inferred nets as that can cause debug issues.
+`default_nettype none
 
-module top (
+module top #(
+    parameter LOGIC_CLOCK_FREQ_HZ       = 25000000,
+    parameter CPU_CLOCK_FREQ_HZ         = 18432000
+) (
     input wire          hwclk,      // 25MHZ oscillator
     input wire          s1_n,
     output wire [7:0]   led,
@@ -85,7 +90,18 @@ module top (
 
     // consider debouncing s1_n using hwclk (no other clock possible)
     wire reset = ~s1_n || ~pll_locked;      // assert reset when PLL is starting up & unstable
-    assign reset_n = ~reset;                // CPU reset
+
+    // Delay the CPU reset by 1ms.
+    // This is always needed when extal is derived from the pixel clock pll.
+    wire cpu_reset_n;
+    wtm_resetSyncDelay #(1000, LOGIC_CLOCK_FREQ_HZ)
+    sync_delay_reset_to_clock_cpu(
+        .clock          (hwclk),
+        .rst_n          (~reset),
+        .rst_out_n      (cpu_reset_n)
+    );
+    assign reset_n = cpu_reset_n; // Have to do this because .pcf file shared between projects
+    wire cpu_reset = ~cpu_reset_n;
 
     // When the CPU is reading from the FPGA drive the bus, else tri-state it.
     reg [7:0] dout;                 // what to write to data bus when requested
@@ -94,7 +110,7 @@ module top (
 
     reg rom_sel;                    // true when the boot ROM is enabled
     always @(posedge phi)
-        if ( reset )
+        if ( cpu_reset )
             rom_sel <= 1;           // after a hard reset, the boot ROM is enabled...
         else if ( ioreq_rd_fe )     // until there is a read from IO port 0xfe
             rom_sel <= 0;
@@ -113,21 +129,50 @@ module top (
         endcase
     end
 
-    // 18.432MHZ = 57600 (when running at X/2)
-    // 18.432MHZ = 115200 (when running at X/1)
     wire        pll_locked;             // true when the PLL has locked to target freq
+    wire        clock_px_x2;
+    wire        clock_px;
+
+`ifdef 1024x768
+
+    pll_25_130 pll ( .clock_in(hwclk), .clock_out(clock_px_x2), .locked(pll_locked) );
+    always@(posedge clock_px_x2)
+        clock_px = ~clock_px;
+
+    // PETER : 50MHz input, 130MHz output, 65MHz output, 25MHz output
+    // pll_25_130 pll ( .clock_in(clock_50_sys_in), .clock_out(clock_px_x2), .clock_px(clock_px), .hwclk(hwclk), .locked(pll_locked) );
+
+    // Clock source for Z8S180 at 18.432MHz derived from 130NHz clock
+    // Source : https://github.com/BrianHGinc/Verilog-Floating-Point-Clock-Divider 
+    BHG_FP_clk_divider #(
+        .INPUT_CLK_HZ  (130000000),     // Source clk_in frequency.
+        .OUTPUT_CLK_HZ ( 18432000)      // Target synthesized output frequency.
+    ) clkdiv_z180 (
+        .clk_in        (clock_px_x2),   // System source clock.
+        .rst_in        (reset),         // Synchronous reset.
+        .clk_out       (extal)          // Synthesized output clock, 50:50 duty cycle.
+    );
+    
+`else 
+
     pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    // PETER : 50MHz input, 18.18MHz output, 25MHz output
+    // pll_25_18432 pll ( .clock_in(clock_50_sys_in), .clock_out(extal), .hwclk(hwclk), .locked(pll_locked) );
+    assign clock_px = hwclk;
+    assign clock_px_x2 = 0;
+    
+`endif
 
 
     // for read cycle: latch value on first phi falling edge after iorq becomes true:
     // fsm counting falling phi when rd is true & enable when count = 0 && iorq is true
     wire    iorq_rd_tick;
-    iorq_rd_fsm rd_fsm (.reset(reset), .phi(phi), .iorq(~iorq_n), .rd(~rd_n), .rd_tick(iorq_rd_tick) );
+    iorq_rd_fsm rd_fsm (.reset(cpu_reset), .phi(phi), .iorq(~iorq_n), .rd(~rd_n), .rd_tick(iorq_rd_tick) );
 
     // for a write cycle: latch value on second phi falling edge after iorq becomes true:
     // fsm counting falling phi when wr is true and enable when count = 1
     wire    iorq_wr_tick;
-    iorq_wr_fsm wr_fsm (.reset(reset), .phi(phi), .iorq(~iorq_n), .wr(~wr_n), .wr_tick(iorq_wr_tick) );
+    iorq_wr_fsm wr_fsm (.reset(cpu_reset), .phi(phi), .iorq(~iorq_n), .wr(~wr_n), .wr_tick(iorq_wr_tick) );
 
 
     // qualified asynchronous bus enable signals
@@ -185,8 +230,14 @@ module top (
 
 
     // VDP
+`ifdef VIDEO_TEST_BARS
+    `ifdef 1024x768
+        video_bars vid (
+    `endif
+`else
     video vid (
-        .pxclk(hwclk),       // 25 MHZ
+`endif
+        .pxclk(clock_px),       // Pixel clock frequency
         .reset(reset),
         .vga_red(vga_red),
         .vga_grn(vga_grn),

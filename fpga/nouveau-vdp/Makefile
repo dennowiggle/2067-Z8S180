@@ -1,7 +1,13 @@
 TOP=..
 
+# Uncomment to display colour test bars for 1024x768
+DEFINES=-D VIDEO_TEST_BARS -D 1024x768
+# Uncomment to display test text on a 1024x768 screen
+# DEFINES=-D 1024x768
+# Build as per video series
+# DEFINES=
+
 include $(TOP)/Make.rules
-#FREQ		= 110	# test for fun
 
 LIB_UTILS=$(TOP)/lib
 include $(LIB_UTILS)/Make.include
@@ -16,12 +22,15 @@ FILES= \
 	$(VDP_LIBV)/video.v \
 	$(VDP_LIBV)/vdp_table_test.v \
 	$(VDP_LIBV)/vgasync.v \
+	$(VDP_LIBV)/bars-1024x768.v \
+	$(LIB_UTILS)/clock_gen/BHG_FP_clk_divider.sv \
+	pll_25_130.v \
 	pll_25_18432.v
 
 all:: top.bin
 
 top.json: $(FILES) rom.hex
-	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
+	$(COMPILE.v) $(DEFINES) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
 
 timing: top.asc
 	icetime -tmd $(DEVICE) $^
@@ -46,12 +55,14 @@ rom.bin:
 	hexdump -v -e '/1 "%02x\n"' < $< > $@
 
 clean::
-	rm -f *.lst *.bin *.hex *.sym pll_25_18432.v
+	rm -f *.lst *.bin *.hex *.sym pll_25_18432.v pll_25_130.v
 
 
 pll_25_18432.v:
 	icepll -i 25 -o 18.432 -m -n pll_25_18432 > $@
 
+pll_25_130.v:
+	icepll -i 25 -o 130 -m -n pll_25_130 > $@
 
 
 iorq_rd_fsm_tb.vvp : iorq_rd_fsm_tb.v iorq_rd_fsm.v

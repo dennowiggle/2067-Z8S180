@@ -35,11 +35,38 @@ module video (
     wire vs_bdr;
     wire vs_hsync, vdp_hsync;
     wire vs_vsync, vdp_vsync;
-    wire [$clog2(800)-1:0] vs_col;    // big enough to hold the counter value
-    wire [$clog2(525)-1:0] vs_row;     // big enough to hold the counter value
 
     localparam HLB  = 64;      // horizontal left border here to use below
     localparam VTB  = 48;      // vertical top border here to use below
+
+`ifdef 1024x768
+    wire [$clog2(1024):0] vs_col;    // big enough to hold the counter value
+    wire [$clog2(768):0] vs_row;     // big enough to hold the counter value
+
+    vgasync #(
+        .HVID(1024),
+        .HFP(24),
+        .HS(136),
+        .HBP(160),
+        .VVID(768),
+        .VFP(3),
+        .VS(6),
+        .VBP(29),
+        .HLB(HLB),
+        .VTB(VTB)
+    ) vga (
+        .clk(pxclk),
+        .reset(reset),
+        .hsync(vs_hsync),
+        .vsync(vs_vsync),
+        .col(vs_col),
+        .row(vs_row),
+        .vid_active(vs_vid),
+        .bdr_active(vs_bdr)
+    );
+`else
+    wire [$clog2(800)-1:0] vs_col;    // big enough to hold the counter value
+    wire [$clog2(525)-1:0] vs_row;     // big enough to hold the counter value
 
     vgasync #( .HLB(HLB), .VTB(VTB) ) vga (
         .clk(pxclk),
@@ -51,6 +78,8 @@ module video (
         .vid_active(vs_vid),
         .bdr_active(vs_bdr)
     );
+`endif
+
 
     wire [9:0]  name_raddr;
     wire [10:0] pattern_raddr;
