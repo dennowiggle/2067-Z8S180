@@ -22,7 +22,9 @@
 `default_nettype none
 
 module top (
-    input wire          hwclk,      // 25MHZ oscillator
+//    input wire          hwclk,      // 25MHZ oscillator
+    input wire          clock_50_sys_in,      // 50MHZ oscillator
+
     input wire          s1_n,
     output wire [7:0]   led,
 
@@ -53,7 +55,8 @@ module top (
     input wire          mreq_n,
     input wire          m1_n,
 
-    output wire         reset_n,
+    // output wire         reset_n,
+    output wire         reset,
     input wire          rfsh_n,
     input wire          st,
     input wire          tend1_n,
@@ -66,15 +69,38 @@ module top (
     input wire          sd_miso,
     input wire          sd_det,
 
-    output  wire        vga_red,
-    output  wire        vga_grn,
-    output  wire        vga_blu,
-    output  wire        vga_hsync,
-    output  wire        vga_vsync,
+    // output  wire        vga_red,
+    // output  wire        vga_grn,
+    // output  wire        vga_blu,
+    // output  wire        vga_hsync,
+    // output  wire        vga_vsync,
 
-    output wire [15:0]  tp          // handy-dandy test-point outputs
+    output wire         rgb_hsync,
+    output wire         rgb_vsync,
+    output wire  [3:0]  rgb_red,
+    output wire  [3:0]  rgb_green,
+    output wire  [3:0]  rgb_blue
+
+    // output wire [15:0]  tp          // handy-dandy test-point outputs
     );
 
+    
+    wire [15:0] tp;                 // handy-dandy test-point outputs
+    wire hwclk;
+    wire reset_n;
+
+    wire vga_red;
+    wire vga_grn;
+    wire vga_blu;
+    wire vga_hsync;
+    wire vga_vsync;
+
+    assign rgb_red   = {4{vga_red}};
+    assign rgb_green = {4{vga_grn}};
+    assign rgb_blue  = {4{vga_blu}};
+    assign rgb_hsync = vga_hsync;
+    assign rgb_vsync = vga_vsync;
+    
     localparam RAM_START = 20'h1000;
 
     assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
@@ -120,7 +146,8 @@ module top (
     // 18.432MHZ = 57600 (when running at X/2)
     // 18.432MHZ = 115200 (when running at X/1)
     wire        pll_locked;             // true when the PLL has locked to target freq
-    pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    // pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    pll_25_18432 pll ( .clock_in(clock_50_sys_in), .clock_out(extal), .hwclk(hwclk), .locked(pll_locked) );
 
 
     // for read cycle: latch value on first phi falling edge after iorq becomes true:
