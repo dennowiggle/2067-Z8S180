@@ -1,11 +1,11 @@
 TOP=..
 
 # Uncomment to display colour test bars for 1024x768
-DEFINES=-D VIDEO_TEST_BARS -D 1024x768
+# DEFINES=-D VIDEO_TEST_BARS -D 1024x768
 # Uncomment to display test text on a 1024x768 screen
 # DEFINES=-D 1024x768
 # Build as per video series
-# DEFINES=
+DEFINES=
 
 include $(TOP)/Make.rules
 
