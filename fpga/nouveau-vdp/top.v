@@ -145,7 +145,7 @@ module top #(
     // Clock source for Z8S180 at 18.432MHz derived from 130NHz clock
     // Source : https://github.com/BrianHGinc/Verilog-Floating-Point-Clock-Divider 
     BHG_FP_clk_divider #(
-        .INPUT_CLK_HZ  (130000000),     // Source clk_in frequency.
+        .INPUT_CLK_HZ  (129688000),     // Source clk_in frequency.
         .OUTPUT_CLK_HZ ( 18432000)      // Target synthesized output frequency.
     ) clkdiv_z180 (
         .clk_in        (clock_px_x2),   // System source clock.
