@@ -25,9 +25,10 @@ module top #(
     parameter LOGIC_CLOCK_FREQ_HZ       = 25000000,
     parameter CPU_CLOCK_FREQ_HZ         = 18432000
 ) (
-    input wire          hwclk,      // 25MHZ oscillator
+    //input wire          hwclk,      // 25MHZ oscillator
+    input wire          clock_50_sys_in,      // 50MHZ oscillator on PETER
     input wire          s1_n,
-    output wire [7:0]   led,
+    output wire [5:0]   led,
 
     input wire [19:0]   a,
     inout wire [7:0]    d,          // bidirectional
@@ -41,13 +42,13 @@ module top #(
 
     output wire         dreq1_n,
 
-    input wire          e,
+    // input wire          e,
     output wire         extal,
     input wire          phi,
 
-    input wire          halt_n,
+    // input wire          halt_n,
 
-    output wire [2:0]   int_n,
+    output wire [1:0]   int_n,
     output wire         nmi_n,
 
     input wire          rd_n,
@@ -56,9 +57,9 @@ module top #(
     input wire          mreq_n,
     input wire          m1_n,
 
-    output wire         reset_n,
-    input wire          rfsh_n,
-    input wire          st,
+    output wire         reset,
+    // input wire          rfsh_n,
+    // input wire          st,
     input wire          tend1_n,
     output wire         wait_n,
 
@@ -69,19 +70,35 @@ module top #(
     input wire          sd_miso,
     input wire          sd_det,
 
-    output  wire        vga_red,
-    output  wire        vga_grn,
-    output  wire        vga_blu,
-    output  wire        vga_hsync,
-    output  wire        vga_vsync,
+    output wire         rgb_hsync,
+    output wire         rgb_vsync,
+    output wire  [3:0]  rgb_red,
+    output wire  [3:0]  rgb_green,
+    output wire  [3:0]  rgb_blue
 
-    output wire [15:0]  tp          // handy-dandy test-point outputs
+    // output wire [15:0]  tp          // handy-dandy test-point outputs
     );
 
+    wire [15:0]  tp;    // handy-dandy test-point outputs
+    wire hwclk;
+    wire reset_n;
+
+    wire vga_red;
+    wire vga_grn;
+    wire vga_blu;
+    wire vga_hsync;
+    wire vga_vsync;
+
+    assign rgb_red   = {4{vga_red}};
+    assign rgb_green = {4{vga_grn}};
+    assign rgb_blue  = {4{vga_blu}};
+    assign rgb_hsync = vga_hsync;
+    assign rgb_vsync = vga_vsync;
+    
     localparam RAM_START = 20'h1000;
 
     // note that the test points here are different from the previous test proggies
-    assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
+    // assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
     //            93            90            87   84 82      80    78    75    73    63    61      56
 
     // a boot ROM
@@ -135,9 +152,12 @@ module top #(
 
 `ifdef 1024x768
 
-    pll_25_130 pll ( .clock_in(hwclk), .clock_out(clock_px_x2), .locked(pll_locked) );
-    always@(posedge clock_px_x2)
-        clock_px = ~clock_px;
+    // pll_25_130 pll ( .clock_in(hwclk), .clock_out(clock_px_x2), .locked(pll_locked) );
+    // always@(posedge clock_px_x2)
+    //     clock_px = ~clock_px;
+
+    // PETER : 50MHz input, 130MHz output, 65MHz output, 25MHz output
+    pll_25_130_pll ( .clock_in(clock_50_sys_in), .clock_out(clock_px_x2), .clock_px(clock_px), .hwclk(hwclk), .locked(pll_locked) );
 
     // Clock source for Z8S180 at 18.432MHz derived from 130NHz clock
     // Source : https://github.com/BrianHGinc/Verilog-Floating-Point-Clock-Divider 
@@ -152,7 +172,9 @@ module top #(
     
 `else 
 
-    pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    // pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    // PETER : 50MHz input, 18.18MHz output, 25MHz output
+    pll_25_18432 pll ( .clock_in(clock_50_sys_in), .clock_out(extal), .hwclk(hwclk), .locked(pll_locked) );
     assign clock_px = hwclk;
     assign clock_px_x2 = 0;
     
@@ -260,6 +282,6 @@ module top #(
     assign we_n = mreq_n | wr_n;
 
     // show some signals from the GPIO ports on the LEDs for reference
-    assign led = {~sd_miso,sd_det,3'b111,~gpio_out[2:0]};
+    assign led = {~sd_miso,sd_det,3'b1,~gpio_out[2:0]};
 
 endmodule

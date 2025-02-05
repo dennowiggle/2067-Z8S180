@@ -59,10 +59,12 @@ clean::
 
 
 pll_25_18432.v:
-	icepll -i 25 -o 18.432 -m -n pll_25_18432 > $@
+	#icepll -i 25 -o 18.432 -m -n pll_25_18432 > $@
+	ecppll -i 50 -o 18.432 -n pll_25_18432 --clkin_name clock_in --clkout0_name clock_out --clkout1 25 --clkout1_name hwclk -f $@
 
 pll_25_130.v:
-	icepll -i 25 -o 130 -m -n pll_25_130 > $@
+	#icepll -i 25 -o 130 -m -n pll_25_130 > $@
+	ecppll -i 50 -o 130.0 -n pll_25_130 --clkin_name clock_in --clkout0_name clock_out --clkout1 65 --clkout1_name clock_px  --clkout2 25 --clkout2_name hwclk -f $@
 
 
 iorq_rd_fsm_tb.vvp : iorq_rd_fsm_tb.v iorq_rd_fsm.v

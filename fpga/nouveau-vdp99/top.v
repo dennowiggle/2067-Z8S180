@@ -26,7 +26,7 @@ module top (
     input wire          clock_50_sys_in,      // 50MHZ oscillator
 
     input wire          s1_n,
-    output wire [7:0]   led,
+    output wire [5:0]   led,
 
     input wire [19:0]   a,
     inout wire [7:0]    d,          // bidirectional
@@ -40,13 +40,13 @@ module top (
 
     output wire         dreq1_n,
 
-    input wire          e,
+    // input wire          e,
     output wire         extal,
     input wire          phi,
 
-    input wire          halt_n,
+    // input wire          halt_n,
 
-    output wire [2:0]   int_n,
+    output wire [1:0]   int_n,
     output wire         nmi_n,
 
     input wire          rd_n,
@@ -55,10 +55,9 @@ module top (
     input wire          mreq_n,
     input wire          m1_n,
 
-    // output wire         reset_n,
     output wire         reset,
-    input wire          rfsh_n,
-    input wire          st,
+    // input wire          rfsh_n,
+    // input wire          st,
     input wire          tend1_n,
     output wire         wait_n,
 
@@ -69,12 +68,6 @@ module top (
     input wire          sd_miso,
     input wire          sd_det,
 
-    // output  wire        vga_red,
-    // output  wire        vga_grn,
-    // output  wire        vga_blu,
-    // output  wire        vga_hsync,
-    // output  wire        vga_vsync,
-
     output wire         rgb_hsync,
     output wire         rgb_vsync,
     output wire  [3:0]  rgb_red,
@@ -84,7 +77,6 @@ module top (
     // output wire [15:0]  tp          // handy-dandy test-point outputs
     );
 
-    
     wire [15:0] tp;                 // handy-dandy test-point outputs
     wire hwclk;
     wire reset_n;
@@ -103,7 +95,7 @@ module top (
     
     localparam RAM_START = 20'h1000;
 
-    assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
+    // assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
     //            93            90            87   84 82      80    78    75    73    63    61      56
 
 
@@ -147,6 +139,7 @@ module top (
     // 18.432MHZ = 115200 (when running at X/1)
     wire        pll_locked;             // true when the PLL has locked to target freq
     // pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    // PETER : 50MHz input, 18.18MHz output, 25MHz output
     pll_25_18432 pll ( .clock_in(clock_50_sys_in), .clock_out(extal), .hwclk(hwclk), .locked(pll_locked) );
 
 
@@ -262,7 +255,7 @@ module top (
 
 
     // show some signals from the GPIO ports on the LEDs for reference
-    assign led = {~sd_miso,sd_det,3'b111,~gpio_out[2:0]};
+    assign led = {~sd_miso,sd_det,3'b1,~gpio_out[2:0]};
 
 
 
