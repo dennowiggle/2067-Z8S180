@@ -157,7 +157,7 @@ module top #(
     //     clock_px = ~clock_px;
 
     // PETER : 50MHz input, 130MHz output, 65MHz output, 25MHz output
-    pll_25_130_pll ( .clock_in(clock_50_sys_in), .clock_out(clock_px_x2), .clock_px(clock_px), .hwclk(hwclk), .locked(pll_locked) );
+    pll_25_130 pll ( .clock_in(clock_50_sys_in), .clock_out(clock_px_x2), .clock_px(clock_px), .hwclk(hwclk), .locked(pll_locked) );
 
     // Clock source for Z8S180 at 18.432MHz derived from 130NHz clock
     // Source : https://github.com/BrianHGinc/Verilog-Floating-Point-Clock-Divider 
