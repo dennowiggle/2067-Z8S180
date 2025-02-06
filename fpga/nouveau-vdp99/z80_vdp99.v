@@ -52,9 +52,9 @@ module z80_vdp99 (
         .reset(reset), .clk1(phi), .clk2(pxclk), .in(cpu_wr_tick), .out(vdp_wr_tick)
     );
 
-    always@(posedge pxclk) begin
-        vdp_mode <= cpu_mode;
-        vdp_din  <= cpu_din;
+    always@(posedge cpu_wr_tick) begin
+            vdp_mode <= cpu_mode;
+            vdp_din  <= cpu_din;
     end
 `else
 
