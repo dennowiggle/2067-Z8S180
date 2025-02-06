@@ -41,8 +41,8 @@ module z80_vdp99 (
 
     wire        vdp_wr_tick;            // pxclk domain
     wire        vdp_rd_tick;            // pxclk domain
-    wire [7:0]  vdp_din;                // pxclk domain
-    wire        vdp_mode;               // pxclk domain
+    reg  [7:0]  vdp_din;                // pxclk domain
+    reg         vdp_mode;               // pxclk domain
 
 `ifdef WTM_CDC_MOD
 
@@ -52,18 +52,10 @@ module z80_vdp99 (
         .reset(reset), .clk1(phi), .clk2(pxclk), .in(cpu_wr_tick), .out(vdp_wr_tick)
     );
 
-    sync_stretch #(
-        .STRETCH_BITS(1), .SYNC_LEN(2) 
-    ) ss_wr_tMode (
-        .reset(reset), .clk1(phi), .clk2(pxclk), .in(cpu_mode), .out(vdp_mode)
-    );
-
-    sync_stretch #(
-        .STRETCH_BITS(1), .SYNC_LEN(2) 
-    ) ss_wr_tData[7:0] (
-        .reset(reset), .clk1(phi), .clk2(pxclk), .in(cpu_din), .out(vdp_din)
-    );
-
+    always@(posedge pxclk) begin
+        vdp_mode <= cpu_mode;
+        vdp_din  <= cpu_din;
+    end
 `else
 
     //Sync cpu_wr_tick, cpu_din, and cpu_mode into the pxclk domain 
