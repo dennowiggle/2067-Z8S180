@@ -133,7 +133,7 @@ module top (
     wire    iorq_wr_tick;
     iorq_wr_fsm wr_fsm (.reset(reset), .phi(phi), .iorq(~iorq_n), .wr(~wr_n), .wr_tick(iorq_wr_tick) );
 
-
+    
     // qualified asynchronous bus enable signals
     wire iorq_rd = ~iorq_n && ~rd_n;
     wire iorq_wr = ~iorq_n && ~wr_n;
@@ -203,6 +203,38 @@ module top (
     wire vdp_vsync;
     wire vdp_irq;       // XXX AND ~vdp_irq into irq_n[x]?
 
+`ifdef WTM_REWRITE
+
+    // Latch the data and address and from the bus on a write cycle and generate a write data valid tick signal
+    wire        cpu_wr_tValid;
+    wire [19:0] cpu_wr_tAddr;
+    wire  [7:0] cpu_wr_tData;
+    wire cpu_wr_vdp_tValid  = cpu_wr_tValid && (cpu_wr_tAddr[7:1] == 7'b1000000);
+
+    wtm_cpu_wr_fsm wr_tValid_fsm      (.clock(phi), .reset(reset), .sig_wr(~iorq_n && ~wr_n), .sig_in(~iorq_n && ~wr_n), .sig_out(cpu_wr_tValid) );
+    wtm_cpu_wr_fsm wr_tAddr_fsm[19:0] (.clock(phi), .reset(reset), .sig_wr(~iorq_n && ~wr_n), .sig_in(a),                .sig_out(cpu_wr_tAddr) );
+    wtm_cpu_wr_fsm wr_tData_fsm[ 7:0] (.clock(phi), .reset(reset), .sig_wr(~iorq_n && ~wr_n), .sig_in(d),                .sig_out(cpu_wr_tData) );
+
+    wtm_z80_vdp99 vdp (
+        .reset(reset),
+        .phi(phi),
+        .pxclk(hwclk),
+        // Read Port
+        .cpu_rd_tValid(ioreq_rd_vdp_tick),
+        .cpu_rd_tMode(a[0]),
+        .cpu_tDout(vdp_dout),
+        // Write Port
+        .cpu_wr_tValid(cpu_wr_vdp_tValid),
+        .cpu_wr_tMode(cpu_wr_tAddr[0]),
+        .cpu_tDin(cpu_wr_tData),
+        .irq(vdp_irq),
+        .color(vdp_color),
+        .hsync(vdp_hsync),
+        .vsync(vdp_vsync)
+    );
+
+`else
+
     z80_vdp99 vdp (
         .reset,
         .phi(phi),
@@ -217,6 +249,8 @@ module top (
         .hsync(vdp_hsync),
         .vsync(vdp_vsync)
     );
+
+`endif
 
     // XXX a hack for now.  Need a decoder & 6-bit DAC for TI99 VDP colors 
     assign vga_red = vdp_color[2];
