@@ -1,5 +1,9 @@
 TOP=..
 
+# DEFINES=-D WTM_CDC_MOD
+DEFINES=-D WTM_REWRITE
+# DEFINES=
+
 LIB_VDP99=$(TOP)/vdp99
 LIB_UTILS=$(TOP)/lib
 
@@ -17,6 +21,8 @@ TBFILES= \
 	memory.v \
 	$(LIB_VDP99_FILES) \
 	$(LIB_UTILS_FILES) \
+	$(LIB_UTILS)/iorq/wtm_cpu_wr_fsm.v \
+	wtm_z80_vdp99.v \
 	z80_vdp99.v
 
 FILES=\
@@ -27,7 +33,7 @@ FILES=\
 all:: top.bin
 
 top.json: $(FILES) rom.hex
-	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
+	$(COMPILE.v) $(DEFINES) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
 
 timing: top.asc
 	icetime -tmd $(DEVICE) $^
@@ -53,7 +59,7 @@ pll_25_18432.v:
 
 
 z80_vdp99_tb.vvp: $(TBFILES) z80_vdp99_tb.v
-	iverilog -o $@ $^
+	iverilog $(DEFINES) -o $@ $^
 
 z80_vdp99_tb: z80_vdp99_tb.vcd
 	gtkwave $^

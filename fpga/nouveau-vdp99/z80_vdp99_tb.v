@@ -41,21 +41,6 @@ module tb ();
     wire vsync;
     wire irq;
 
-    z80_vdp99 uut (
-        .reset(reset),
-        .phi(phi),
-        .pxclk(pxclk),
-        .cpu_mode(a[0]),
-        .cpu_din(d),
-        .cpu_dout(cpu_dout),
-        .cpu_wr_tick(ioreq_wr_vdp_tick),
-        .cpu_rd_tick(ioreq_rd_vdp_tick),
-        .color(color),
-        .hsync(hsync),
-        .vsync(vsync),
-        .irq(irq)
-    );
-
     localparam phi_period = (1.0/18432000)*1000000000; // clk1 is running at about 18.432MHZ
     localparam pxclk_period = (1.0/25000000)*1000000000; // clk2 is running at 25MHZ
 
@@ -78,6 +63,58 @@ module tb ();
     wire ioreq_wr_vdp = iorq_wr && (a[7:1] == 7'b1000000);  // true for ports 80 and 81
     wire ioreq_wr_vdp_tick  = iorq_wr_tick && (a[7:1] == 7'b1000000);
     wire ioreq_rd_vdp_tick  = iorq_rd_tick && (a[7:1] == 7'b1000000);
+
+`ifdef WTM_REWRITE
+
+    // Latch the data and address and from the bus on a write cycle and generate a write data valid tick signal
+    wire        cpu_wr_tValid;
+    wire [15:0] cpu_wr_tAddr;
+    wire  [7:0] cpu_wr_tData;
+    wtm_cpu_wr_fsm wr_tValid_fsm      (.clock(phi), .reset(reset), .sig_wr(iorq_wr), .sig_in(iorq_wr), .sig_out(cpu_wr_tValid) );
+    wtm_cpu_wr_fsm wr_tAddr_fsm[15:0] (.clock(phi), .reset(reset), .sig_wr(iorq_wr), .sig_in(a),       .sig_out(cpu_wr_tAddr) );
+    wtm_cpu_wr_fsm wr_tData_fsm[ 7:0] (.clock(phi), .reset(reset), .sig_wr(iorq_wr), .sig_in(d),       .sig_out(cpu_wr_tData) );
+    wire cpu_wr_vdp_tValid  = cpu_wr_tValid && (cpu_wr_tAddr[7:1] == 7'b1000000);
+
+    wtm_z80_vdp99 vdp (
+        .reset,
+        .phi(phi),
+        .pxclk(pxclk),
+
+        // Read Port
+        .cpu_rd_tValid(ioreq_rd_vdp_tick),
+        .cpu_rd_tMode(a[0]),
+        .cpu_tDout(cpu_dout),
+
+        // Write Port
+        .cpu_wr_tValid(cpu_wr_vdp_tValid),
+        .cpu_wr_tMode(cpu_wr_tAddr[0]),
+        .cpu_tDin(cpu_wr_tData),
+
+        .irq(irq),
+        
+        .color(color),
+        .hsync(hsync),
+        .vsync(vsync)
+    );
+
+    `else
+
+    z80_vdp99 uut (
+        .reset(reset),
+        .phi(phi),
+        .pxclk(pxclk),
+        .cpu_mode(a[0]),
+        .cpu_din(d),
+        .cpu_dout(cpu_dout),
+        .cpu_wr_tick(ioreq_wr_vdp_tick),
+        .cpu_rd_tick(ioreq_rd_vdp_tick),
+        .color(color),
+        .hsync(hsync),
+        .vsync(vsync),
+        .irq(irq)
+    );
+
+    `endif
 
     integer i;      // for loop iterator
 
