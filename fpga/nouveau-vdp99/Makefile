@@ -50,7 +50,8 @@ clean::
 
 
 pll_25_18432.v:
-	icepll -i 25 -o 18.432 -m -n pll_25_18432 > $@
+	#icepll -i 25 -o 18.432 -m -n pll_25_18432 > $@
+	ecppll -i 50 -o 18.432 -n pll_25_18432 --clkin_name clock_in --clkout0_name clock_out --clkout1 25 --clkout1_name hwclk -f $@
 
 
 z80_vdp99_tb.vvp: $(TBFILES) z80_vdp99_tb.v

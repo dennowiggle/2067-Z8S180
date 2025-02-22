@@ -22,9 +22,11 @@
 `default_nettype none
 
 module top (
-    input wire          hwclk,      // 25MHZ oscillator
+//    input wire          hwclk,      // 25MHZ oscillator
+    input wire          clock_50_sys_in,      // 50MHZ oscillator
+
     input wire          s1_n,
-    output wire [7:0]   led,
+    output wire [5:0]   led,
 
     input wire [19:0]   a,
     inout wire [7:0]    d,          // bidirectional
@@ -38,13 +40,13 @@ module top (
 
     output wire         dreq1_n,
 
-    input wire          e,
+    // input wire          e,
     output wire         extal,
     input wire          phi,
 
-    input wire          halt_n,
+    // input wire          halt_n,
 
-    output wire [2:0]   int_n,
+    output wire [1:0]   int_n,
     output wire         nmi_n,
 
     input wire          rd_n,
@@ -53,9 +55,9 @@ module top (
     input wire          mreq_n,
     input wire          m1_n,
 
-    output wire         reset_n,
-    input wire          rfsh_n,
-    input wire          st,
+    output wire         reset,
+    // input wire          rfsh_n,
+    // input wire          st,
     input wire          tend1_n,
     output wire         wait_n,
 
@@ -66,21 +68,43 @@ module top (
     input wire          sd_miso,
     input wire          sd_det,
 
-    output  wire [1:0]  vga_red,
-    output  wire [1:0]  vga_grn,
-    output  wire [1:0]  vga_blu,
-    output  wire        vga_hsync,
-    output  wire        vga_vsync,
+    output wire         rgb_hsync,
+    output wire         rgb_vsync,
+    output wire  [3:0]  rgb_red,
+    output wire  [3:0]  rgb_green,
+    output wire  [3:0]  rgb_blue,
 
-    output wire [15:0]  tp          // handy-dandy test-point outputs
+    // SNES Controller signals
+    output wire         snes_clock,
+    output wire         snes_latch,
+    input  wire         snes1_data,
+    input  wire         snes2_data,
+
+
+
+    // output wire [15:0]  tp          // handy-dandy test-point outputs
     );
+
+    wire [15:0] tp;                 // handy-dandy test-point outputs
+    wire hwclk;
+    wire reset_n;
+
+    wire [1:0] vga_red;
+    wire [1:0] vga_grn;
+    wire [1:0] vga_blu;
+    wire vga_hsync;
+    wire vga_vsync;
+
+    assign rgb_red   = {2{vga_red}};
+    assign rgb_green = {2{vga_grn}};
+    assign rgb_blue  = {2{vga_blu}};
+    assign rgb_hsync = vga_hsync;
+    assign rgb_vsync = vga_vsync;
 
     localparam RAM_START = 20'h1000;
 
-    assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
+    // assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
     //            93            90            87   84 82      80    78    75    73    63    61      56
-
-
 
     // a boot ROM
     wire [7:0]  rom_data;           // ROM output data bus
@@ -113,6 +137,8 @@ module top (
         mreq_rom:       dout = rom_data;            // boot ROM memory
         ioreq_rd_f0:    dout = ioreq_rd_f0_data;    // gpio input
         ioreq_rd_vdp:   dout = vdp_dout;            // data from the VDP
+        ioreq_rd_j3:    dout = {joy1_data[7:2], ~vdp_irq, joy1_data[0]};
+        ioreq_rd_j4:    dout = joy2_data[7:0];
         default:        dbus_out = 0;
         endcase
     end
@@ -120,7 +146,9 @@ module top (
     // 18.432MHZ = 57600 (when running at X/2)
     // 18.432MHZ = 115200 (when running at X/1)
     wire        pll_locked;             // true when the PLL has locked to target freq
-    pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    // pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    // PETER : 50MHz input, 18.18MHz output, 25MHz output
+    pll_25_18432 pll ( .clock_in(clock_50_sys_in), .clock_out(extal), .hwclk(hwclk), .locked(pll_locked) );
 
 
     // for read cycle: latch value on first phi falling edge after iorq becomes true:
@@ -243,7 +271,34 @@ module top (
 
 
     // show some signals from the GPIO ports on the LEDs for reference
-    assign led = {~sd_miso,sd_det,3'b111,~gpio_out[2:0]};
+    assign led = {~sd_miso,sd_det,1'b1,~gpio_out[2:0]};
+
+
+    wire ioreq_rd_j3 = iorq_rd && (a[7:0] == 8'ha8);
+    wire ioreq_rd_j4 = iorq_rd && (a[7:0] == 8'ha9);
+
+    wire [15:0] joy1_data;
+    wire [15:0] joy2_data;
+
+    wtm_snesJoysticks #(
+        .CLOCK_FREQ_HZ    (18181818)
+    )
+    wtm_joysticks(
+        // CPU clock and reset
+        .clock          (phi),
+        .reset_n        (reset_n),
+
+        // SNES Controller signals
+        .snes_clock     (snes_clock),
+        .snes_latch     (snes_latch),
+        .snes1_data     (snes1_data),
+        .snes2_data     (snes2_data),
+
+        // Joystick registers
+        .joy1_data      (joy1_data),
+        .joy2_data      (joy2_data)
+    );
+
 
 
 
