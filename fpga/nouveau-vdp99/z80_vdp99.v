@@ -19,6 +19,9 @@
 //
 //**************************************************************************
 
+
+// The purpose of this module is to connect the CPU clock domain to the VDP clock domain.
+
 `default_nettype none
 
 module z80_vdp99 #(
@@ -73,7 +76,7 @@ module z80_vdp99 #(
     wire [7:0] vdp_dout;
     reg [7:0] cpu_dout_reg;
     //always @(posedge pxclk)
-    always @(negedge pxclk)         // buy us another 25ns setup on dout
+    always @(negedge pxclk)         // buy us another 20ns setup on dout
         if ( vdp_rd_tick )
             cpu_dout_reg <= vdp_dout;
 
