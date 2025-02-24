@@ -1,0 +1,16 @@
+# rules that are specific to the PETER LFE5U-25F-TQ144-breakout board
+
+DEVICE		= 25k
+PACKAGE		= TQFP144
+SPEED       = 7
+#FLASH_PROG	= sudo $(TOP)/prog-2057-flash.sh
+PIN_FMT     = lpf
+PINMAP		= $(TOP)/pinmap-PETER.lpf
+TIMING      = $(TOP)/timing.py
+
+COMPILE_OPT = 
+SYNTH 	 	= synth_ecp5
+NEXTPNR 	= nextpnr-ecp5
+PACK        = ecppack --compress
+NEXTPNR_FMT = textcfg
+NEXTPNR_OPT = --speed $(SPEED) --randomize-seed --lpf-allow-unconstrained --pre-pack $(TIMING)
