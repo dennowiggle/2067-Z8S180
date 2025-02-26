@@ -106,9 +106,13 @@ module top (
     // assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
     //            93            90            87   84 82      80    78    75    73    63    61      56
 
+
+    localparam NUM_BOOT_BRAMS = 6;                  // Even number due to bug in yosys newer versions!
+    localparam NUM_VRAM_BRAMS = 32-NUM_BOOT_BRAMS;  // 32 total in ICE40HX4/8K, residual = VRAM
+
     // a boot ROM
     wire [7:0]  rom_data;           // ROM output data bus
-    memory #( .VRAM_SIZE(5*512) ) rom ( .rd_clk(phi), .addr(a), .data(rom_data) );
+    memory #( .RAM_SIZE(NUM_BOOT_BRAMS*512) ) rom ( .rd_clk(phi), .addr(a), .data(rom_data) );
 
     // consider debouncing s1_n using hwclk (no other clock possible)
     wire reset = ~s1_n || ~pll_locked;      // assert reset when PLL is starting up & unstable
@@ -230,7 +234,7 @@ module top (
     wire vdp_vsync;
     wire vdp_irq;
 
-    z80_vdp99 #( .VRAM_SIZE(12*1024+3*512) ) vdp (
+    z80_vdp99 #( .VRAM_SIZE(NUM_VRAM_BRAMS*512) ) vdp (
         .reset,
         .phi(phi),
         .pxclk(hwclk),
