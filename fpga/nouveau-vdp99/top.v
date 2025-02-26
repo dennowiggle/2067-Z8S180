@@ -79,9 +79,7 @@ module top (
     output wire         snes_latch,
     input  wire         snes1_data,
     input  wire         snes2_data,
-
-
-
+    
     // output wire [15:0]  tp          // handy-dandy test-point outputs
     );
 
@@ -95,9 +93,9 @@ module top (
     wire vga_hsync;
     wire vga_vsync;
 
-    assign rgb_red   = {2{vga_red}};
-    assign rgb_green = {2{vga_grn}};
-    assign rgb_blue  = {2{vga_blu}};
+    assign rgb_red   = {{2{vga_red[1]}}, {2{vga_red[0]}}};
+    assign rgb_green = {{2{vga_grn[1]}}, {2{vga_grn[0]}}};
+    assign rgb_blue  = {{2{vga_blu[1]}}, {2{vga_blu[0]}}};
     assign rgb_hsync = vga_hsync;
     assign rgb_vsync = vga_vsync;
 
