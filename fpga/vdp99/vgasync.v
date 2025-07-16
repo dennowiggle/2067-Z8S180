@@ -1,6 +1,12 @@
 // Generate VGA sync signals
 // Default parameters = 512x384, centered, with borders, on 640x480@60 VGA w/25MHZ px clock
 //
+// On the Origin of Pixels...
+//
+// row == 0 on the first visible row of pixels (the first row of the vertical top border)
+// col == 0 on the first pixel of the visible pixel colum (the first col of the border)
+// The last row is the final row of the back porch.
+// The last col is the final pixel of the back porch.
 
 module vgasync #(
     parameter   HLB  = 64,      // horizontal left border width px clocks
@@ -33,6 +39,7 @@ module vgasync #(
     output wire                 row_last,       // col == max value 
     output wire                 vid_active,     // true when video is active (not including borders)
     output wire                 vid_active0,    // t-1 async 'next' signal value of vid_active
+    output wire                 sprite_tick,    // next pxclk is optimal to start sprite fetching
     output wire                 bdr_active,     // true when border video is active 
     output wire                 end_of_frame    // true for one tick at the end of a frame
     );
@@ -66,7 +73,7 @@ module vgasync #(
     localparam  VVIS_BEGIN  = VTB_BEGIN;        // first row of the vertical visible video
     localparam  VVIS_END    = VBB_END;          // first row past end of the vertical visible video
 
-    localparam  TEXT_MODE_PADDING = 16;         // make the left & right borders 8px wider when in text mode
+    localparam  TEXT_MODE_PADDING = 16;         // make the left & right borders are wider in text mode
 
     reg [HC_BITS-1:0]   hctr_reg, hctr_next;    // pixel counter
     reg [VC_BITS-1:0]   vctr_reg, vctr_next;    // line counter
@@ -75,7 +82,7 @@ module vgasync #(
     reg                 vsync_reg, vsync_next;
     reg                 border_reg, border_next;
     reg                 visible_next;
-
+    reg                 sprite_tick_next;
 
     always @ (posedge clk) 
     begin
@@ -118,10 +125,13 @@ module vgasync #(
         hsync_next = hctr_next >= HS_BEGIN && hctr_next < HS_END;
         vsync_next = vctr_next >= VS_BEGIN && vctr_next < VS_END;
 
+        sprite_tick_next = vctr_next >= VVID_BEGIN-1 && vctr_next < VVID_END-1 && hctr_next == HRB_BEGIN;
+
     end
 
     assign vid_active = vid_active_reg;
     assign vid_active0 = vid_active_next;               // let the FSM have a preview
+    assign sprite_tick = sprite_tick_next;              // the next pxclk is optimal to start sprite data loading
     assign hsync = hsync_reg;
     assign vsync = vsync_reg;
     assign col = hctr_reg;

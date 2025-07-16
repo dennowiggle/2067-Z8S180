@@ -57,8 +57,9 @@ module tb();
     localparam clk_period = (1.0/25000000)*1000000000; // clk is running at 25MHZ
     always #(clk_period/2) clk = ~clk;
 
-    integer i;
-    integer j;
+    integer     i;
+    integer     j;
+    reg [7:0]   val8;       // a way to truncate the value of i
 
     initial begin
 
@@ -91,7 +92,8 @@ module tb();
 
         // fill the VRAM with some data
         // note that while filling the first time, the read data is 'hx
-        for ( i=0; i<'h2000; i=i+1 ) begin
+//       for ( i=0; i<'h2000; i=i+1 ) begin
+        for ( i=0; i<'h1fff; i=i+1 ) begin      // leave the last vram byte unset
             @(posedge clk);
             mode <= 0;      // mode 0 = data
             din <= i&'h0ff;
@@ -105,6 +107,15 @@ module tb();
             @(posedge clk);
         end
 
+        // Wait to see the read-ahead getting data from the next address.
+        // NOTE: This data may be X if the counter is not allowed to wrap around above.
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);     // extra long time here to find easy in the waveform output
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+
         // read it back
         mode <= 1;          // mode 1 = address
         din <= 8'h00;       // address LSB
@@ -112,7 +123,7 @@ module tb();
 
         @(posedge clk);
         mode <= 1;          // mode 1 = address
-        din <= 8'h10;       // address MSB (read mode)  -- read out of phase for fun
+        din <= 8'h00;       // address MSB (read mode)
         wr_tick <= 1;
 
         @(posedge clk);
@@ -120,7 +131,13 @@ module tb();
         din <= 'hz;         // address MSB (read mode)
         wr_tick <= 0;
 
+        // exagerated delay here to illustrate when dout is valid when idle
+        @(posedge clk);
+        @(posedge clk);
+
         for ( i=0; i<'h2000; i=i+1 ) begin
+            val8 <= i;
+
 //$display( "%8t vram[%4x]:%x", $time, i+'h20f, uut.vram[i+'h20f] );
             @(posedge clk);
             mode <= 0;      // mode 0 = data
@@ -130,8 +147,9 @@ module tb();
             mode <= 0;
             rd_tick <= 0;
 
-            if ( dout != (i&'h0ff) )
-                $display( "memory readback failed: %8t vram[%4x]:%x", $time, i, uut.vram[i] );
+//$display( "%8t vram[%4x]:%x dout=%x i=%x", $time, i, uut.vram[i], dout, val8 );
+            if ( dout !== val8 )
+                $display( "memory readback failed: %8t vram[%4x]:%x dout:%x !== i:%x", $time, i, uut.vram[i], dout, val8 );
 
             @(posedge clk);
         end
@@ -236,15 +254,83 @@ module tb();
         rd_tick <= 1;       // read vram using the CPU interface
         @(posedge clk);
         mode <= 0;
-        rd_tick <= 1;       // and another...
+        rd_tick <= 1;       // and another...  (this is illegally fast)
         @(posedge clk);
         mode <= 0;
         rd_tick <= 0;
         dma_addr <= 'h1103;
         dma_tick <= 1;
 
+        // idle for a moment
+        @(posedge clk);
+        mode <= 0;
+        rd_tick <= 0;
+        wr_tick <= 0;
+        dma_tick <= 0;
+        dma_addr <= 'hx;
+        din <= 'hz;
+        @(posedge clk);
+        @(posedge clk);
+
+        @(posedge clk);     // another DMA read to show the address counter NOT advancing
+        mode <= 0;
+        rd_tick <= 0;
+        wr_tick <= 0;
+        dma_tick <= 1;
+        dma_addr <= 'h1107;
+        din <= 'hz;
+
+        @(posedge clk);
 
 
+        // what happens when BOTH dma_tick and rd_tick are true at the same time?
+        mode <= 0;
+        rd_tick <= 0;
+        wr_tick <= 0;
+        dma_tick <= 0;
+        dma_addr <= 'hx;
+        din <= 'hz;
+        @(posedge clk);
+
+        @(posedge clk);
+        dma_addr <= 'h1108;
+        dma_tick <= 1;
+        rd_tick <= 1;
+
+        @(posedge clk);
+        mode <= 0;
+        rd_tick <= 0;
+        wr_tick <= 0;
+        dma_tick <= 0;
+        dma_addr <= 'hx;
+        din <= 'hz;
+
+        // waste time to make waveform easier to read
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+
+
+        // What happens If we assert dma_tick multiple periods with a rd_tick before the last dma_tick?
+        // Observation: This is understandable but undesirable to do IRL.
+        @(posedge clk);
+        dma_addr <= 'h1109;
+        dma_tick <= 1;
+        rd_tick <= 0;
+
+        @(posedge clk);
+        dma_addr <= 'h110a;
+        dma_tick <= 1;
+        rd_tick <= 1;
+
+        @(posedge clk);
+        dma_addr <= 'h110b;
+        dma_tick <= 1;
+        rd_tick <= 0;
+
+
+
+        // idle a while so can see the end of the waveform
 
         @(posedge clk);
         mode <= 0;

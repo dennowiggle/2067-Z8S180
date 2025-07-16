@@ -21,6 +21,10 @@
 
 `default_nettype none
 
+/**
+* Instantiate and connect together the parts of the VDP
+***************************************************************************/
+
 module vdp99 #(
     parameter   VRAM_SIZE = 8*1024 // 12*1024 // 8*1024
     ) (
@@ -84,7 +88,10 @@ module vdp99 #(
         .irq(irq_status)
     );
 
-    // XXX the CPU's rd_tick probably has to be buffered to fit into the FSM timing
+    // Note that dma_rd_tick and rd_tick can coinside.
+    // It is assumed that dma_rd_tick will pause often enough for the
+    // vram to emit the read-ahead data from the current mem.addr_reg
+    // address before it is advanced by a subsequent rd_tick.
 
     wire [VRAM_ADDR_WIDTH-1:0] dma_addr;
     wire dma_rd_tick;
@@ -96,7 +103,7 @@ module vdp99 #(
         .clk(pxclk),
         .dma_addr(dma_addr),
         .dma_rd_tick(dma_rd_tick),
-        .rd_tick(rd_tick),              // shouldn't use the CPU rd_tick, prefer a FSM sync'd signal here
+        .rd_tick(rd_tick),
         .wr_tick(wr_tick),
         .mode(mode),
         .din(din),
@@ -107,6 +114,7 @@ module vdp99 #(
     wire [9:0] row;
     wire vid_active;
     wire vid_active0;
+    wire sprite_tick;
     wire col_last;
     wire row_last;
     wire last_pixel;
@@ -124,6 +132,7 @@ module vdp99 #(
         .row(row),
         .vid_active(vid_active),
         .vid_active0(vid_active0),
+        .sprite_tick(sprite_tick),
         .col_last(col_last),
         .row_last(row_last),
         .bdr_active(bdr_active),
@@ -139,7 +148,7 @@ module vdp99 #(
     wire row_last_out;
     wire [3:0]  color_out;
 
-    vdp_fsm #( .VRAM_SIZE(VRAM_SIZE) ) fsm 
+    vdp_fsm #( .VRAM_SIZE(VRAM_SIZE) ) fsm
     (
         .reset(reset),
         .pxclk(pxclk),
@@ -165,6 +174,7 @@ module vdp99 #(
         .vsync(vsync_in),
         .vid_active(vid_active),
         .vid_active0(vid_active0),
+        .sprite_tick(sprite_tick),
         .bdr_active(bdr_active),
         .last_pixel(last_pixel),
         .col_last(col_last),
@@ -202,7 +212,25 @@ module vdp99 #(
     assign irq = vdp_ie ? irq_status : 0;
     wire [7:0]  vdp_status = { irq_status, 7'b0 };
 
-    // XXX fix this so don't send vram_dout from the last fsm DMA access! 
-    assign dout = rd_tick ? (mode==0 ? vram_dout : vdp_status ) : 'hx;
+    // vdmux consumes and caches the vram read data on behalf of the CPU.
+    // It exists to pre-fetch vram data on behalf of the CPU so that the CPU
+    // may subsequently read the value without being forced to wait if a DMA
+    // read is in progress when the CPU wants to read.
+
+    // NOTE: Using ~dma_rd_tick for the .rd_tick() here will defer the latching of the
+    // vram data until the value from the address counter is valid in the vram module.
+    // This is OK as long as dma_rd_tick is never asserted longer than the shortest period
+    // between two successive CPU read ticks.
+
+    wire [7:0] vram_dmux;
+    vram_rd_demux vdmux (
+        .reset(reset),
+        .clk(pxclk),
+        .rd_tick(~dma_rd_tick),         // grab value from VRAM when FSM is not using it
+        .din(vram_dout),                // this will be the next VRAM value to send on next rd_tick
+        .dout(vram_dmux)
+    );
+
+    assign dout = rd_tick ? (mode==0 ? vram_dmux : vdp_status ) : 'hx;
 
 endmodule

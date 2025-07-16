@@ -192,8 +192,8 @@ module tb ();
         @(negedge do_reg_write);
 
         vdp_reg <= 1;
-        //vdp_reg_value <= 'h60;      // graphics mode 1, enable screen, IE
-        vdp_reg_value <= 'h70;      // text mode, enable screen, IE
+        vdp_reg_value <= 'h60;      // graphics mode 1, enable screen, IE
+        //vdp_reg_value <= 'h70;      // text mode, enable screen, IE
         //vdp_reg_value <= 'h50;      // text mode, enable screen, IE=0
         //vdp_reg_value <= 'h60;      // graphics mode 2, enable screen, IE
         do_reg_write <= 1;
@@ -217,12 +217,12 @@ module tb ();
 
 
         vdp_reg <= 5;
-        vdp_reg_value <= 'hff;      // sprint attribute table 0x3f80 - 0x3fff
+        vdp_reg_value <= 'h1a;      // sprite attribute table 0x0d00 - 0x0d7f
         do_reg_write <= 1;
         @(negedge do_reg_write);
 
         vdp_reg <= 6;
-        vdp_reg_value <= 'hff;      // sprint pattern table 0x3800 - 0x3fff
+        vdp_reg_value <= 'h02;      // sprite pattern table 0x1000 - 0x17ff
         do_reg_write <= 1;
         @(negedge do_reg_write);
 
@@ -260,10 +260,13 @@ module tb ();
         @(negedge iorq);
         a <= #5 'hz;            //  >5ns after iorq & rd trailing
 
-        @(posedge phi);
+        // wait until we can see the second frame begin
+        //@(posedge uut.vdp.fsm.row_last);
+        @(posedge uut.vdp.vid_active);
+        @(posedge uut.vdp.vid_active);
+        @(posedge uut.vdp.vid_active);
+        @(posedge uut.vdp.vid_active);
 
-        // waste some time to make waveform easier to zoom
-        #(phi_period*20);
         $finish;
     end
 

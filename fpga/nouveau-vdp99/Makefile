@@ -54,8 +54,8 @@ pll_25_18432.v:
 	ecppll -i 50 -o 18.432 -n pll_25_18432 --clkin_name clock_in --clkout0_name clock_out --clkout1 25 --clkout1_name hwclk -f $@
 
 
-z80_vdp99_tb.vvp: $(TBFILES) z80_vdp99_tb.v
-	iverilog -o $@ $^
+z80_vdp99_tb.vvp: z80_vdp99_tb.v $(TBFILES) 
+	$(VERILOG_SIM) -s tb -o $@ $^
 
 z80_vdp99: z80_vdp99_tb.vcd
 	gtkwave $^
