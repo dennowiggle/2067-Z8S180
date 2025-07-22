@@ -1,96 +1,67 @@
-//**************************************************************************
-//
-//    Copyright (C) 2024  John Winans
-//
-//    This library is free software; you can redistribute it and/or
-//    modify it under the terms of the GNU Lesser General Public
-//    License as published by the Free Software Foundation; either
-//    version 2.1 of the License, or (at your option) any later version.
-//
-//    This library is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//    Lesser General Public License for more details.
-//
-//    You should have received a copy of the GNU Lesser General Public
-//    License along with this library; if not, write to the Free Software
-//    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
-//    USA
-//
-//**************************************************************************
 
-module top (
-    input wire          hwclk,      // 25MHZ oscillator on the 2057 FPGA board
-    input wire          s1_n,       // press-button on the 2057 FPGA board
-    output wire [7:0]   led,        // LEDs on the 2057 FPGA board
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2025  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.51+101 (git sha1 314842d2a, g++ 12.2.0-14 -fPIC -O3)
 
-    input wire [19:0]   a,          // Z8S180 address bus
-    inout wire [7:0]    d,          // Z8S180 data bus is bidirectional  <-------------
+-- Running command `synth_ice40 -top top -json top.json' --
 
-    input wire          busack_n,   // Z8S180 /BUSACK
-    output wire         busreq_n,   // Z8S180 /BUSREQ
+1. Executing SYNTH_ICE40 pass.
 
-    output wire         ce_n,       // SRAM /CE
-    output wire         oe_n,       // SRAM /OE
-    output wire         we_n,       // SRAM /WE
+1.1. Executing Verilog-2005 frontend: /usr/local/bin/../share/yosys/ice40/cells_sim.v
+Parsing Verilog input from `/usr/local/bin/../share/yosys/ice40/cells_sim.v' to AST representation.
+Generating RTLIL representation for module `\SB_IO'.
+Generating RTLIL representation for module `\SB_GB_IO'.
+Generating RTLIL representation for module `\SB_GB'.
+Generating RTLIL representation for module `\SB_LUT4'.
+Generating RTLIL representation for module `\SB_CARRY'.
+Generating RTLIL representation for module `\SB_DFF'.
+Generating RTLIL representation for module `\SB_DFFE'.
+Generating RTLIL representation for module `\SB_DFFSR'.
+Generating RTLIL representation for module `\SB_DFFR'.
+Generating RTLIL representation for module `\SB_DFFSS'.
+Generating RTLIL representation for module `\SB_DFFS'.
+Generating RTLIL representation for module `\SB_DFFESR'.
+Generating RTLIL representation for module `\SB_DFFER'.
+Generating RTLIL representation for module `\SB_DFFESS'.
+Generating RTLIL representation for module `\SB_DFFES'.
+Generating RTLIL representation for module `\SB_DFFN'.
+Generating RTLIL representation for module `\SB_DFFNE'.
+Generating RTLIL representation for module `\SB_DFFNSR'.
+Generating RTLIL representation for module `\SB_DFFNR'.
+Generating RTLIL representation for module `\SB_DFFNSS'.
+Generating RTLIL representation for module `\SB_DFFNS'.
+Generating RTLIL representation for module `\SB_DFFNESR'.
+Generating RTLIL representation for module `\SB_DFFNER'.
+Generating RTLIL representation for module `\SB_DFFNESS'.
+Generating RTLIL representation for module `\SB_DFFNES'.
+Generating RTLIL representation for module `\SB_RAM40_4K'.
+Generating RTLIL representation for module `\SB_RAM40_4KNR'.
+Generating RTLIL representation for module `\SB_RAM40_4KNW'.
+Generating RTLIL representation for module `\SB_RAM40_4KNRNW'.
+Generating RTLIL representation for module `\ICESTORM_LC'.
+Generating RTLIL representation for module `\SB_PLL40_CORE'.
+Generating RTLIL representation for module `\SB_PLL40_PAD'.
+Generating RTLIL representation for module `\SB_PLL40_2_PAD'.
+Generating RTLIL representation for module `\SB_PLL40_2F_CORE'.
+Generating RTLIL representation for module `\SB_PLL40_2F_PAD'.
+Generating RTLIL representation for module `\SB_WARMBOOT'.
+Generating RTLIL representation for module `\SB_SPRAM256KA'.
+Generating RTLIL representation for module `\SB_HFOSC'.
+Generating RTLIL representation for module `\SB_LFOSC'.
+Generating RTLIL representation for module `\SB_RGBA_DRV'.
+Generating RTLIL representation for module `\SB_LED_DRV_CUR'.
+Generating RTLIL representation for module `\SB_RGB_DRV'.
+Generating RTLIL representation for module `\SB_I2C'.
+Generating RTLIL representation for module `\SB_SPI'.
+Generating RTLIL representation for module `\SB_LEDDA_IP'.
+Generating RTLIL representation for module `\SB_FILTER_50NS'.
+Generating RTLIL representation for module `\SB_IO_I3C'.
+Generating RTLIL representation for module `\SB_IO_OD'.
+Generating RTLIL representation for module `\SB_MAC16'.
+Generating RTLIL representation for module `\ICESTORM_RAM'.
+Successfully finished Verilog frontend.
 
-    output wire         dreq1_n,    // Z8S180 /DREQ1
-
-    input wire          e,          // Z8S180 E
-    output wire         extal,      // Z8S180 EXTAL (main clock from FPGA to CPU)
-    input wire          phi,        // Z8S180 reference clock output
-
-    input wire          halt_n,     // Z8S180 /HALT status pin
-
-    output wire [2:0]   int_n,      // Z8S180 INT0, 1, 2
-    output wire         nmi_n,      // Z8S180 NMI
-
-    input wire          rd_n,       // Z8S180 /RD
-    input wire          wr_n,       // Z8S180 /WR
-    input wire          iorq_n,     // Z8S180 /IORQ
-    input wire          mreq_n,     // Z8S180 /MREQ
-    input wire          m1_n,       // Z8S180 /M1
-
-    output wire         reset_n,    // Z8S180 /RESET
-    input wire          rfsh_n,     // Z8S180 /RFSH
-    input wire          st,         // Z8S180 /ST
-    input wire          tend1_n,    // Z8S180 /TEND1
-    output wire         wait_n,     // Z8S180 /WAIT
-
-    output wire [15:0]  tp          // handy-dandy test-points on the 2057 FPGA board
-    );
- 
-    assign tp = { st, rfsh_n, wr_n, rd_n, iorq_n, mreq_n, m1_n, phi, extal };
-
-    assign reset_n = s1_n;
-
-    // ONLY when the CPU is reading shall we drive the data bus
-    assign d = ( rd_n == 0 ? { 8'b0 } : { 8{1'bz} } );
-
-    // extal = 25000000/16777216 = 1.5hz (approx)
-    //localparam CLK_BITS = 24;
-    localparam CLK_BITS = 22;
-    //localparam CLK_BITS = 1;
-
-    // Use a counter to divide the clock speed down to human speed.
-    reg [CLK_BITS-1:0]     ctr;
-    always @(posedge hwclk) begin
-        ctr <= ctr + 1;
-    end
-
-    assign extal = ctr[CLK_BITS-1]; // slow clock for the CPU
-
-    //assign led = ~a[15:8];          // recall that the LEDs light when low
-    assign led = ~a[7:0];           // recall that the LEDs light when low
-
-    // de-assert everything
-    assign busreq_n = 1'b1;         // do not request the bus
-    assign dreq1_n = 1'b1;          // do not request a DMA operation
-    assign int_n = 3'b111;          // do not request any IRQs
-    assign nmi_n = 1'b1;            // do not request an NMI
-    assign wait_n = 1'b1;           // do not request any wait states
-    assign ce_n = 1'b1;             // do not enable the SRAM
-    assign oe_n = 1'b1;             // do not pass go
-    assign we_n = 1'b1;             // do not collect $200
-
-endmodule
+1.2. Executing HIERARCHY pass (managing design hierarchy).
