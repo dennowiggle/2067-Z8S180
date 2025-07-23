@@ -93,9 +93,9 @@ module top (
     wire vga_hsync;
     wire vga_vsync;
 
-    assign rgb_red   = {{2{vga_red[1]}}, {2{vga_red[0]}}};
-    assign rgb_green = {{2{vga_grn[1]}}, {2{vga_grn[0]}}};
-    assign rgb_blue  = {{2{vga_blu[1]}}, {2{vga_blu[0]}}};
+    assign rgb_red   = {vga_red, 2'b00};
+    assign rgb_green = {vga_grn, 2'b00};
+    assign rgb_blue  = {vga_blu, 2'b00};
     assign rgb_hsync = vga_hsync;
     assign rgb_vsync = vga_vsync;
 
