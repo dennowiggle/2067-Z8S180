@@ -20,6 +20,8 @@
 //**************************************************************************
 
 `timescale 1ns/1ns
+`default_nettype none
+
 
 module tb();
 
@@ -40,7 +42,7 @@ module tb();
 `define ASSERT(cond) if ( !(cond) ) $display("%s:%0d %m time:%3t ASSERTION (cond) FAILED!", `__FILE__, `__LINE__, $time );
 
     initial begin
-        $dumpfile("vdp_reg_ifce_tb.vcd");
+        $dumpfile( { `__FILE__, "cd" } );
         $dumpvars;
     end
     

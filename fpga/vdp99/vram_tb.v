@@ -20,6 +20,7 @@
 //**************************************************************************
 
 `timescale 1ns/1ns
+`default_nettype none
 
 module tb();
 
@@ -50,7 +51,7 @@ module tb();
     );
 
     initial begin
-        $dumpfile("vram_tb.vcd");
+        $dumpfile( { `__FILE__, "cd" } );
         $dumpvars;
     end
     

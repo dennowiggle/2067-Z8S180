@@ -20,6 +20,8 @@
 //**************************************************************************
 
 `timescale 1ns/1ns
+`default_nettype none
+
 
 // at this point, this exists only to compile vdp99 with iverilog
 module tb();
@@ -52,7 +54,7 @@ module tb();
     );
 
     initial begin
-        $dumpfile("vdp99_tb.vcd");
+        $dumpfile( { `__FILE__, "cd" } );
         $dumpvars;
     end
     

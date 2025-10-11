@@ -1,4 +1,6 @@
 `timescale 1ns/1ns
+`default_nettype none
+
 
 module tb();
 
@@ -33,7 +35,7 @@ module tb();
     always #(clk_period/2) clk = ~clk;
 
     initial begin
-        $dumpfile("vgasync_tb.vcd");
+        $dumpfile( { `__FILE__, "cd" } );
         $dumpvars;
     
         #(clk_period*4);

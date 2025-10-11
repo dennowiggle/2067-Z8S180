@@ -18,7 +18,9 @@ TBFILES= \
 	$(LIB_VDP99_FILES) \
 	$(LIB_UTILS_FILES) \
 	color_palette.v\
-	z80_vdp99.v
+	z80_vdp99.v\
+	z80_vga99.v\
+	z80_ay3891x.v
 
 FILES=\
 	top.v \
@@ -46,7 +48,7 @@ rom.bin:
 	hexdump -v -e '/1 "%02x\n"' < $< > $@
 
 clean::
-	rm -f *.lst *.bin *.sym pll_25_18432.v
+	rm -f *.lst *.bin *.sym pll_25_18432.v rom.hex z80_vdp99_tb.ram
 
 
 pll_25_18432.v:
@@ -54,9 +56,11 @@ pll_25_18432.v:
 	ecppll -i 50 -o 18.432 -n pll_25_18432 --clkin_name clock_in --clkout0_name clock_out --clkout1 25 --clkout1_name hwclk -f $@
 
 
-z80_vdp99_tb.vvp: z80_vdp99_tb.v $(TBFILES) 
-	$(VERILOG_SIM) -s tb -o $@ $^
+z80_vdp99_tb.vvp: z80_vdp99_tb.v $(TBFILES) z80_vdp99_tb.ram
+	$(VERILOG_SIM) -s tb -o $@ z80_vdp99_tb.v $(TBFILES)
 
 z80_vdp99: z80_vdp99_tb.vcd
 	gtkwave $^
 
+z80_vdp99_tb.ram: z80_vdp99_tb.ram.in
+	sed -e 's/#.*$$//' z80_vdp99_tb.ram.in > z80_vdp99_tb.ram

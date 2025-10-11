@@ -68,6 +68,13 @@ module top (
     input wire          sd_miso,
     input wire          sd_det,
 
+    input wire          joy1_up,
+    input wire          joy1_dn,
+    input wire          joy1_lt,
+    input wire          joy1_rt,
+    input wire          joy1_fire,
+    input wire          joy1_btn2,
+
     output wire         rgb_hsync,
     output wire         rgb_vsync,
     output wire  [3:0]  rgb_red,
@@ -82,6 +89,9 @@ module top (
     
     // output wire [15:0]  tp          // handy-dandy test-point outputs
     );
+
+    //wire [7:0] vdp_dout;
+    wire vdp_irq;
 
     wire [15:0] tp;                 // handy-dandy test-point outputs
     wire hwclk;
@@ -105,8 +115,10 @@ module top (
     //            93            90            87   84 82      80    78    75    73    63    61      56
 
 
-    localparam NUM_BOOT_BRAMS = 6;                  // Even number due to bug in yosys newer versions!
-    localparam NUM_VRAM_BRAMS = 32-NUM_BOOT_BRAMS;  // 32 total in ICE40HX4/8K, residual = VRAM
+    localparam HWCLK_FREQ       = 25000000;
+
+    localparam NUM_BOOT_BRAMS   = 6;                  // Even number due to bug in yosys newer versions!
+    localparam NUM_VRAM_BRAMS   = 32-NUM_BOOT_BRAMS;  // 32 total in ICE40HX4/8K, residual = VRAM
 
     // a boot ROM
     wire [7:0]  rom_data;           // ROM output data bus
@@ -137,7 +149,10 @@ module top (
         (* parallel_case *)     // no more than one case can match (one-hot)
         case (1)
         mreq_rom:       dout = rom_data;            // boot ROM memory
-        ioreq_rd_f0:    dout = ioreq_rd_f0_data;    // gpio input
+        ioreq_rd_f0:    dout = ioreq_rd_data;       // gpio input
+        ioreq_rd_j3:    dout = ioreq_rd_data;       // J3 input
+        ioreq_rd_j4:    dout = ioreq_rd_data;       // J4 input
+        ioreq_rd_ay:    dout = ay_dout;       		// ay-3-8910
         ioreq_rd_vdp:   dout = vdp_dout;            // data from the VDP
         ioreq_rd_j3:    dout = {joy1_data[7:2], ~vdp_irq, joy1_data[0]};
         ioreq_rd_j4:    dout = joy2_data[7:0];
@@ -185,8 +200,39 @@ module top (
 //  wire ioreq_rd_fe = iorq_rd && (a[7:0] == 8'hfe);                
     wire ioreq_rd_fe_tick = iorq_rd_tick && (a[7:0] == 8'hfe);      // flash select disable access port
 
+    wire ioreq_rd_j3 = iorq_rd && (a[7:0] == 8'ha8);
+    wire ioreq_rd_j3_tick = iorq_rd_tick && (a[7:0] == 8'ha8);      // joystick J3
+
+    wire ioreq_rd_j4 = iorq_rd && (a[7:0] == 8'ha9);
+    wire ioreq_rd_j4_tick = iorq_rd_tick && (a[7:0] == 8'ha9);      // joystick J4
+
+    // B0 & B1 are the ay registers
+    wire ioreq_wr_ay = iorq_wr && (a[7:1] == 8'hb0>>1);
+    wire ioreq_rd_ay = iorq_rd && (a[7:1] == 8'hb0>>1);
+
     // ROM memory address decoder (address bus is 20 bits wide)
     wire mreq_rom = rom_sel && mem_rd && a[19:12] == 0;         // all top MSBs of bottom 4K are zero
+
+    wire [7:0]  ay_dout;
+    wire [2:0]  ay3891x_out;
+
+    z80_ay3891x #(
+        .CLK_FREQ(HWCLK_FREQ),
+        ) ay (
+        .reset(reset),
+		.phi(phi),
+        .clk(hwclk),
+        .a0(a[0]),
+        .cpu_wr(ioreq_wr_ay),
+        .wdata(d),
+        .cpu_rd(ioreq_rd_ay),
+        .rdata(ay_dout),
+        .aout(ay3891x_out)
+        );
+
+    assign aout = ay3891x_out;
+    //assign aout = {2'b00, |ay3891x_out};    // OR the three channels into only the A channel output bit
+
 
     // The GPIO output latch
     reg [7:0] gpio_out;
@@ -195,11 +241,17 @@ module top (
             gpio_out <= d;
     end
 
-    // It is not really necessary to latch this because the SD signals will be stable during a read:
-    reg [7:0] ioreq_rd_f0_data;     //  = {sd_miso,sd_det,6'bx};  // data value when reading port F0
+    // This should be a 2-always state machine.
+    reg [7:0] ioreq_rd_data;            // data value when reading an internal IO port
     always @(negedge phi) begin
-        if ( ioreq_rd_f0_tick )
-            ioreq_rd_f0_data <= {sd_miso,sd_det,6'bx};
+        // ioreq_rd_data is an implied latch in here
+        // XXX synchronize the joystick inputs at some point
+        (* parallel_case *)     // no more than one case can match (one-hot)
+        case (1)
+        ioreq_rd_f0_tick:   ioreq_rd_data <= {sd_miso,sd_det,6'bx};
+        ioreq_rd_j3_tick:   ioreq_rd_data <= { joy1_up, joy1_dn, joy1_rt, joy1_btn2, 1'b1, joy1_lt, ~vdp_irq, joy1_fire };
+        ioreq_rd_j4_tick:   ioreq_rd_data <= { joy1_up, joy1_dn, joy1_rt, joy1_btn2, 1'b1, joy1_lt, 1'b1, joy1_fire };  // XXX
+        endcase
     end
 
     assign sd_mosi = gpio_out[0];   // connect the GPIO output bits to the SD card pins
@@ -208,7 +260,6 @@ module top (
 
     assign busreq_n = 1'b1;     // de-assert /BUSREQ
     assign dreq1_n = 1'b1;      // de-assert /DREQ1
-    //assign int_n = 3'b111;      // de-assert /INT0 /INT1 /INT2
     assign int_n = { ~vdp_irq, 2'b11 };
     assign nmi_n = 1'b1;        // de-assert /NMI
     assign wait_n = 1'b1;       // de-assert /WAIT
@@ -220,20 +271,16 @@ module top (
     assign oe_n = mreq_n | rd_n;
     assign we_n = mreq_n | wr_n;
 
-
-
-
     wire ioreq_rd_vdp = iorq_rd && (a[7:1] == 7'b1000000);  // true for ports 80 and 81
     wire ioreq_wr_vdp = iorq_wr && (a[7:1] == 7'b1000000);  // true for ports 80 and 81
 
-    wire [7:0] vdp_dout;
+`ifdef no_sync_vga
     wire [3:0] vdp_color;
     wire vdp_hsync;
     wire vdp_vsync;
-    wire vdp_irq;
 
     z80_vdp99 #( .VRAM_SIZE(NUM_VRAM_BRAMS*512) ) vdp (
-        .reset,
+        .reset(reset),
         .phi(phi),
         .pxclk(hwclk),
         .cpu_mode(a[0]),
@@ -247,26 +294,40 @@ module top (
         .vsync(vdp_vsync)
     );
 
-
+    // Remap the 4-bit VDP color codes to 6-bit RGB
     color_palette palette (
         .color(vdp_color),
         .red(vga_red),
         .grn(vga_grn),
         .blu(vga_blu)
     );
-/*
-    // XXX a hack for now.  Need a decoder & 6-bit DAC for TI99 VDP colors 
-    assign vga_red = { vdp_color[2], vdp_color[2] };
-    assign vga_grn = { vdp_color[1], vdp_color[1] };
-    assign vga_blu = { vdp_color[0], vdp_color[0] };
-*/
+
     assign vga_hsync = ~vdp_hsync;
     assign vga_vsync = ~vdp_vsync;
+`else
+    z80_vga99 #( .VRAM_SIZE(NUM_VRAM_BRAMS*512) ) vdp (
+        .reset(reset),
+        .phi(phi),
+        .pxclk(hwclk),
+        .cpu_mode(a[0]),
+        .cpu_din(d),
+        .cpu_dout(vdp_dout),
+        .irq(vdp_irq),
+        .cpu_wr(ioreq_wr_vdp),
+        .cpu_rd(ioreq_rd_vdp),
+        .red(vga_red),
+        .grn(vga_grn),
+        .blu(vga_blu),
+        .hsync(vga_hsync),
+        .vsync(vga_vsync)
+    );
+`endif
 
-/*
+    // show some signals from the GPIO ports on the LEDs for reference
+    assign led = {~sd_miso,sd_det,1'b1,~gpio_out[2:0]};
+
+
     wire ioreq_rd_j3 = iorq_rd && (a[7:0] == 8'ha8);
-    wire ioreq_rd_j3_tick = iorq_rd_tick && (a[7:0] == 8'ha8);      // joystick J3
-
     wire ioreq_rd_j4 = iorq_rd && (a[7:0] == 8'ha9);
     wire ioreq_rd_j4_tick = iorq_rd_tick && (a[7:0] == 8'ha9);      // joystick J4
 */
