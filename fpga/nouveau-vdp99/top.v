@@ -68,12 +68,12 @@ module top (
     input wire          sd_miso,
     input wire          sd_det,
 
-    input wire          joy1_up,
-    input wire          joy1_dn,
-    input wire          joy1_lt,
-    input wire          joy1_rt,
-    input wire          joy1_fire,
-    input wire          joy1_btn2,
+    // input wire          joy1_up,
+    // input wire          joy1_dn,
+    // input wire          joy1_lt,
+    // input wire          joy1_rt,
+    // input wire          joy1_fire,
+    // input wire          joy1_btn2,
 
     output wire         rgb_hsync,
     output wire         rgb_vsync,
@@ -87,10 +87,14 @@ module top (
     input  wire         snes1_data,
     input  wire         snes2_data,
     
+    // output  wire [2:0]  aout,       // hack for testing the AY-3-891x
+
     // output wire [15:0]  tp          // handy-dandy test-point outputs
     );
 
-    //wire [7:0] vdp_dout;
+    wire [2:0] aout;                // hack for testing the AY-3-891x
+
+    wire [7:0] vdp_dout;
     wire vdp_irq;
 
     wire [15:0] tp;                 // handy-dandy test-point outputs
@@ -154,8 +158,6 @@ module top (
         ioreq_rd_j4:    dout = ioreq_rd_data;       // J4 input
         ioreq_rd_ay:    dout = ay_dout;       		// ay-3-8910
         ioreq_rd_vdp:   dout = vdp_dout;            // data from the VDP
-        ioreq_rd_j3:    dout = {joy1_data[7:2], ~vdp_irq, joy1_data[0]};
-        ioreq_rd_j4:    dout = joy2_data[7:0];
         default:        dbus_out = 0;
         endcase
     end
@@ -249,8 +251,8 @@ module top (
         (* parallel_case *)     // no more than one case can match (one-hot)
         case (1)
         ioreq_rd_f0_tick:   ioreq_rd_data <= {sd_miso,sd_det,6'bx};
-        ioreq_rd_j3_tick:   ioreq_rd_data <= { joy1_up, joy1_dn, joy1_rt, joy1_btn2, 1'b1, joy1_lt, ~vdp_irq, joy1_fire };
-        ioreq_rd_j4_tick:   ioreq_rd_data <= { joy1_up, joy1_dn, joy1_rt, joy1_btn2, 1'b1, joy1_lt, 1'b1, joy1_fire };  // XXX
+        ioreq_rd_j3_tick:   ioreq_rd_data <= {joy1_data[7:2], ~vdp_irq, joy1_data[0]};
+        ioreq_rd_j4_tick:   ioreq_rd_data <= joy2_data[7:0];
         endcase
     end
 
@@ -326,19 +328,6 @@ module top (
     // show some signals from the GPIO ports on the LEDs for reference
     assign led = {~sd_miso,sd_det,1'b1,~gpio_out[2:0]};
 
-
-    wire ioreq_rd_j3 = iorq_rd && (a[7:0] == 8'ha8);
-    wire ioreq_rd_j4 = iorq_rd && (a[7:0] == 8'ha9);
-    wire ioreq_rd_j4_tick = iorq_rd_tick && (a[7:0] == 8'ha9);      // joystick J4
-*/
-
-
-    // show some signals from the GPIO ports on the LEDs for reference
-    assign led = {~sd_miso,sd_det,1'b1,~gpio_out[2:0]};
-
-
-    wire ioreq_rd_j3 = iorq_rd && (a[7:0] == 8'ha8);
-    wire ioreq_rd_j4 = iorq_rd && (a[7:0] == 8'ha9);
 
     wire [15:0] joy1_data;
     wire [15:0] joy2_data;
