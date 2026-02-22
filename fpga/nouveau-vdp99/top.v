@@ -107,6 +107,24 @@ module top (
     wire reset = ~s1_n || ~pll_locked;      // assert reset when PLL is starting up & unstable
     assign reset_n = ~reset;                // CPU reset
 
+    // Reload the FPGA when the external switch is pressed
+    reg warmboot_now;
+    initial begin
+        warmboot_now  <= 1'b0;
+    end;
+
+    always @(posedge s1_n, posedge reset)
+        if (reset)
+            warmboot_now <= 1'b0;
+        else if (s1_n)
+            warmboot_now <= 1'b1;
+
+    SB_WARMBOOT reload_fpga (
+        .S0(1'b0),
+        .S1(1'b0),
+        .BOOT(warmboot_now)
+    );
+
     // When the CPU is reading from the FPGA drive the bus, else tri-state it.
     reg [7:0] dout;                 // what to write to data bus when requested
     reg dbus_out;                   // 1 if the FPGA shoudl drive the data bus
