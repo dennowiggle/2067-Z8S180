@@ -1,6 +1,6 @@
 TOP=..
 
-VERILOG_TB_DEFINES = -D NO_INIT_VRAM
+VERILOG_TB_DEFINES = -DNO_INIT_VRAM
 
 LIB_VDP99=$(TOP)/vdp99
 LIB_UTILS=$(TOP)/lib
@@ -32,7 +32,7 @@ FILES=\
 all:: top.bin
 
 top.json: $(FILES) rom.hex
-	$(COMPILE.v) $(VERILOG_TB_DEFINES) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
+	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
 
 timing: top.asc
 	icetime -tmd $(DEVICE) $^
@@ -58,7 +58,7 @@ pll_25_18432.v:
 
 
 z80_vdp99_tb.vvp: z80_vdp99_tb.v $(TBFILES) z80_vdp99_tb.ram
-	$(VERILOG_SIM) -s tb -o $@ z80_vdp99_tb.v $(TBFILES)
+	$(VERILOG_SIM)  $(VERILOG_TB_DEFINES) -s tb -o $@ z80_vdp99_tb.v $(TBFILES)
 
 z80_vdp99: z80_vdp99_tb.vcd
 	gtkwave $^
