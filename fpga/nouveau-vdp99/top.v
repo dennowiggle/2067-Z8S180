@@ -108,11 +108,7 @@ module top (
     assign reset_n = ~reset;                // CPU reset
 
     // Reload the FPGA when the external switch is pressed
-    reg warmboot_now;
-    initial begin
-        warmboot_now  <= 1'b0;
-    end;
-
+    reg warmboot_now = 1'b0;
     always @(posedge s1_n, posedge reset)
         if (reset)
             warmboot_now <= 1'b0;
