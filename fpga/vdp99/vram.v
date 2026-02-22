@@ -40,6 +40,8 @@
 `default_nettype none
 
 module vram #(
+    parameter DPRAM_FILE_NAME = "16KRamZero.hex",
+    parameter ROM_FILE_NAME = "../nouveau-vdp99/rom.hex",
     parameter VRAM_SIZE = 8192
     ) (
     input wire                          reset,
@@ -114,5 +116,14 @@ module vram #(
             endcase
         end
     end
+
+`ifndef NO_INIT_VRAM
+    // Initialize RAM from hex values in ASCII file
+    initial
+    begin
+        $readmemh(DPRAM_FILE_NAME, vram);
+        $readmemh(ROM_FILE_NAME, vram);
+    end
+`endif
 
 endmodule

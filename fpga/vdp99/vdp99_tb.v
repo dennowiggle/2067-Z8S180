@@ -50,7 +50,9 @@ module tb();
         .dout(dout),
         .color(color),
         .hsync(hsync),
-        .vsync(vsync)
+        .vsync(vsync),
+        .rom_en(1'b0),
+        .rom_addr(20'h00000)
     );
 
     initial begin

@@ -41,7 +41,9 @@ module z80_vdp99 #(
     output wire [3:0]   color,
     output wire         hsync,
     output wire         vsync,
-    output wire         irq             // Note: The IRQ is an async signal in the CPU domain
+    output wire         irq,            // Note: The IRQ is an async signal in the CPU domain
+    input wire          rom_en,
+    input wire [19:0]   rom_addr
     );
 
     localparam SYN_LEN = 3;             // too long for worst case write timing
@@ -94,7 +96,9 @@ module z80_vdp99 #(
         .irq(irq),
         .color(color),
         .hsync(hsync),
-        .vsync(vsync)
+        .vsync(vsync),
+        .rom_en(rom_en),
+        .rom_addr(rom_addr)
     );
  
 endmodule

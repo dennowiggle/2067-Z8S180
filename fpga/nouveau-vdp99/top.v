@@ -95,12 +95,13 @@ module top (
 
     localparam HWCLK_FREQ       = 25000000;
 
-    localparam NUM_BOOT_BRAMS   = 6;                  // Even number due to bug in yosys newer versions!
+    localparam NUM_BOOT_BRAMS   = 0;                  // Put the boot rom in VRAM.
     localparam NUM_VRAM_BRAMS   = 32-NUM_BOOT_BRAMS;  // 32 total in ICE40HX4/8K, residual = VRAM
 
     // a boot ROM
     wire [7:0]  rom_data;           // ROM output data bus
-    memory #( .RAM_SIZE(NUM_BOOT_BRAMS*512) ) rom ( .rd_clk(phi), .addr(a), .data(rom_data) );
+    // Use VDP VRAM for ROM
+    // memory #( .RAM_SIZE(NUM_BOOT_BRAMS*512) ) rom ( .rd_clk(phi), .addr(a), .data(rom_data) );
 
     // consider debouncing s1_n using hwclk (no other clock possible)
     wire reset = ~s1_n || ~pll_locked;      // assert reset when PLL is starting up & unstable
@@ -126,7 +127,8 @@ module top (
 
         (* parallel_case *)     // no more than one case can match (one-hot)
         case (1)
-        mreq_rom:       dout = rom_data;            // boot ROM memory
+        // Rom read through VRAM so following line commented out
+        // mreq_rom:       dout = vdp_dout;            // boot ROM memory from VRAM
         ioreq_rd_f0:    dout = ioreq_rd_data;       // gpio input
         ioreq_rd_j3:    dout = ioreq_rd_data;       // J3 input
         ioreq_rd_j4:    dout = ioreq_rd_data;       // J4 input
@@ -245,7 +247,9 @@ module top (
     assign oe_n = mreq_n | rd_n;
     assign we_n = mreq_n | wr_n;
 
-    wire ioreq_rd_vdp = iorq_rd && (a[7:1] == 7'b1000000);  // true for ports 80 and 81
+    // Treat ROM as coming from VDP VRAM if rom_sel is enabled
+    wire ioreq_rd_vdp = rom_sel ? mreq_rom :
+            iorq_rd && (a[7:1] == 7'b1000000);  // true for ports 80 and 81
     wire ioreq_wr_vdp = iorq_wr && (a[7:1] == 7'b1000000);  // true for ports 80 and 81
 
 `ifdef no_sync_vga
@@ -265,7 +269,9 @@ module top (
         .cpu_rd(ioreq_rd_vdp),
         .color(vdp_color),
         .hsync(vdp_hsync),
-        .vsync(vdp_vsync)
+        .vsync(vdp_vsync),
+        .rom_en(rom_sel),
+        .rom_addr(a),
     );
 
     // Remap the 4-bit VDP color codes to 6-bit RGB
@@ -293,7 +299,9 @@ module top (
         .grn(vga_grn),
         .blu(vga_blu),
         .hsync(vga_hsync),
-        .vsync(vga_vsync)
+        .vsync(vga_vsync),
+        .rom_en(rom_sel),
+        .rom_addr(a),
     );
 `endif
 

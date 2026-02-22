@@ -55,7 +55,9 @@ module tb ();
         .color(color),
         .hsync(hsync),
         .vsync(vsync),
-        .irq(irq)
+        .irq(irq),
+        .rom_en(1'b0),
+        .rom_addr(20'h00000)
     );
 
     localparam phi_period = (1.0/18432000)*1000000000; // clk1 is running at about 18.432MHZ

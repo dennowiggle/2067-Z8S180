@@ -1,6 +1,8 @@
 TOP=..
 include $(TOP)/Make.rules
 
+VERILOG_TB_DEFINES = -D NO_INIT_VRAM
+
 all::
 
 vdp_reg_ifce_tb.vvp: vdp_reg_ifce_tb.v vdp_reg_ifce.v
@@ -17,7 +19,7 @@ vdp_irq: vdp_irq_tb.vcd
 	gtkwave $^
 
 vdp99_tb.vvp: vdp99_tb.v vdp99.v vram_rd_demux.v vdp_reg_ifce.v vdp_irq.v vgasync.v vram.v vdp_fsm.v vdp_fsm_gfx.v vdp_fsm_sprite.v sprite.v
-	$(VERILOG_SIM) -s tb -o $@ $^
+	$(VERILOG_SIM) $(VERILOG_TB_DEFINES) -s tb -o $@ $^
 
 vdp99: vdp99_tb.vcd
 	gtkwave $^
@@ -31,7 +33,7 @@ vgasync: vgasync_tb.vcd
 
 
 vram_tb.vvp: vram_tb.v vram.v
-	$(VERILOG_SIM) -s tb -o $@ $^
+	$(VERILOG_SIM) $(VERILOG_TB_DEFINES) -s tb -o $@ $^
 
 vram: vram_tb.vcd
 	gtkwave $^

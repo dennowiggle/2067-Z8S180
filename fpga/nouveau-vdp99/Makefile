@@ -1,5 +1,7 @@
 TOP=..
 
+VERILOG_TB_DEFINES = -D NO_INIT_VRAM
+
 LIB_VDP99=$(TOP)/vdp99
 LIB_UTILS=$(TOP)/lib
 
@@ -30,7 +32,7 @@ FILES=\
 all:: top.bin
 
 top.json: $(FILES) rom.hex
-	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
+	$(COMPILE.v) $(VERILOG_TB_DEFINES) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
 
 timing: top.asc
 	icetime -tmd $(DEVICE) $^

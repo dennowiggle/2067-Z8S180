@@ -41,7 +41,9 @@ module vdp99 #(
 
     output  wire [3:0]  color,      // 4-bit color output
     output  wire        hsync,
-    output  wire        vsync
+    output  wire        vsync,
+    input   wire        rom_en,
+    input   wire [19:0] rom_addr
     );
 
     localparam VRAM_ADDR_WIDTH = $clog2(VRAM_SIZE);
@@ -95,7 +97,13 @@ module vdp99 #(
     // address before it is advanced by a subsequent rd_tick.
 
     wire [VRAM_ADDR_WIDTH-1:0] dma_addr;
+    wire [VRAM_ADDR_WIDTH-1:0] fsm_dma_addr;
     wire dma_rd_tick;
+    wire fsm_dma_rd_tick;
+
+    // The VRAM behaves as ROM if rom_en is selected, always reading to CPU.
+    assign dma_rd_tick = rom_en ? 1'b1 : fsm_dma_rd_tick;
+    assign dma_addr = rom_en ? rom_addr[VRAM_ADDR_WIDTH-1:0] : fsm_dma_addr;
 
     wire [7:0]  vram_dout;
     vram #( .VRAM_SIZE(VRAM_SIZE) ) mem
@@ -171,8 +179,8 @@ module vdp99 #(
         .vdp_fg_color(vdp_fg_color),
         .vdp_bg_color(vdp_bg_color),
 
-        .vdp_dma_addr(dma_addr),
-        .vdp_dma_rd_tick(dma_rd_tick),
+        .vdp_dma_addr(fsm_dma_addr),
+        .vdp_dma_rd_tick(fsm_dma_rd_tick),
         .vram_dout(vram_dout),
 
         .hsync(hsync_in),
@@ -241,6 +249,7 @@ module vdp99 #(
         .dout(vram_dmux)
     );
 
-    assign dout = rd_tick ? (mode==0 ? vram_dmux : vdp_status ) : 'hx;
+    assign dout = rom_en ? vram_dout : 
+                    rd_tick ? (mode==0 ? vram_dmux : vdp_status ) : 'hx;
 
 endmodule

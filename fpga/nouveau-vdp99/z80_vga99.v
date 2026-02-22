@@ -44,7 +44,9 @@ module z80_vga99 #(
     output wire [1:0]   blu,
     output wire         hsync,
     output wire         vsync,
-    output wire         irq
+    output wire         irq,
+    input wire          rom_en,
+    input wire [19:0]   rom_addr
     );
 
     wire [3:0]  vdp_color;
@@ -72,7 +74,9 @@ module z80_vga99 #(
         .cpu_rd(cpu_rd),
         .color(vdp_color),
         .hsync(vdp_hsync),
-        .vsync(vdp_vsync)
+        .vsync(vdp_vsync),
+        .rom_en(rom_en),
+        .rom_addr(rom_addr)
     );
 
     // Remap the 4-bit VDP color codes to 6-bit RGB
