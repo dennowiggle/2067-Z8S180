@@ -29,7 +29,7 @@ FILES=\
 	$(TBFILES) \
 	pll_25_18432.v
 
-all:: top.bin
+all:: multi.bin
 
 top.json: $(FILES) rom.hex
 	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
@@ -37,8 +37,11 @@ top.json: $(FILES) rom.hex
 timing: top.asc
 	icetime -tmd $(DEVICE) $^
 
-prog: top.bin
+prog: multi.bin
 	$(FLASH_PROG) $^
+
+multi.bin: top.bin
+	icemulti -v -p0 -o $@ $^
 
 # extra dependancies
 top.asc: $(PINMAP)

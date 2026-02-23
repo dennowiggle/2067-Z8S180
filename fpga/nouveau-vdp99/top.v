@@ -109,10 +109,8 @@ module top (
 
     // Reload the FPGA when the external switch is pressed
     reg warmboot_now = 1'b0;
-    always @(posedge s1_n, posedge reset)
-        if (reset)
-            warmboot_now <= 1'b0;
-        else if (s1_n)
+    always @(posedge s1_n)
+        if (s1_n)
             warmboot_now <= 1'b1;
 
     SB_WARMBOOT reload_fpga (
