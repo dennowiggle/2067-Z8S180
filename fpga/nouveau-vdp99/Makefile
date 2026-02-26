@@ -58,6 +58,7 @@ clean::
 
 pll_25_18432.v:
 	icepll -i 25 -o 18.432 -m -n pll_25_18432 > $@
+	patch -p0 < pll_add_reset.patch
 
 
 z80_vdp99_tb.vvp: z80_vdp99_tb.v $(TBFILES) z80_vdp99_tb.ram

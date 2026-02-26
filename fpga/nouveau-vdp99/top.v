@@ -104,19 +104,32 @@ module top (
     // memory #( .RAM_SIZE(NUM_BOOT_BRAMS*512) ) rom ( .rd_clk(phi), .addr(a), .data(rom_data) );
 
     // consider debouncing s1_n using hwclk (no other clock possible)
-    wire reset = ~s1_n || ~pll_locked;      // assert reset when PLL is starting up & unstable
-    assign reset_n = ~reset;                // CPU reset
+    wire reset = ~pll_locked;      // assert reset when PLL is starting up & unstable
+    assign reset_n = pll_locked;       // CPU reset
 
-    // Reload the FPGA when the external switch is pressed
-    reg warmboot_now = 1'b0;
+    reg pll_reset = 1'b1;
+    always @(posedge hwclk)
+    begin
+        if (pll_reset == 1'b1)
+            pll_reset <= 1'b0;
+    end
+
+    // Reload the FPGA when the external switch is pressed or commanded by reset register.
+    reg warmboot_now     = 1'b0;
+    reg reset_reg_reload = 1'b0;
+
     always @(posedge s1_n)
         if (s1_n)
             warmboot_now <= 1'b1;
 
+    always @(posedge ioreq_wr_60_tick)
+        if (ioreq_wr_60_tick)
+            reset_reg_reload <= 1'b1;
+
     SB_WARMBOOT reload_fpga (
         .S0(1'b0),
         .S1(1'b0),
-        .BOOT(warmboot_now)
+        .BOOT(warmboot_now || reset_reg_reload)
     );
 
     // When the CPU is reading from the FPGA drive the bus, else tri-state it.
@@ -153,7 +166,7 @@ module top (
     // 18.432MHZ = 57600 (when running at X/2)
     // 18.432MHZ = 115200 (when running at X/1)
     wire        pll_locked;             // true when the PLL has locked to target freq
-    pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked) );
+    pll_25_18432 pll ( .clock_in(hwclk), .clock_out(extal), .locked(pll_locked), .reset(pll_reset) );
 
 
     // for read cycle: latch value on first phi falling edge after iorq becomes true:
@@ -197,6 +210,8 @@ module top (
     // B0 & B1 are the ay registers
     wire ioreq_wr_ay = iorq_wr && (a[7:1] == 8'hb0>>1);
     wire ioreq_rd_ay = iorq_rd && (a[7:1] == 8'hb0>>1);
+
+    wire ioreq_wr_60_tick = iorq_wr_tick && (a[7:0] == 8'h60);      // reset/reload register
 
     // ROM memory address decoder (address bus is 20 bits wide)
     wire mreq_rom = rom_sel && mem_rd && a[19:12] == 0;         // all top MSBs of bottom 4K are zero

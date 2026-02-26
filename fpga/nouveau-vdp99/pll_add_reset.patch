@@ -1,0 +1,21 @@
+--- pll_25_18432.orig	2026-02-25 16:51:40.879534300 -0800
++++ pll_25_18432.v	2026-02-25 17:20:53.657175300 -0800
+@@ -13,7 +13,8 @@
+ module pll_25_18432(
+ 	input  clock_in,
+ 	output clock_out,
+-	output locked
++	output locked,
++	input  reset
+ 	);
+ 
+ SB_PLL40_CORE #(
+@@ -24,7 +25,7 @@
+ 		.FILTER_RANGE(3'b001)	// FILTER_RANGE = 1
+ 	) uut (
+ 		.LOCK(locked),
+-		.RESETB(1'b1),
++		.RESETB(~reset),
+ 		.BYPASS(1'b0),
+ 		.REFERENCECLK(clock_in),
+ 		.PLLOUTCORE(clock_out)
