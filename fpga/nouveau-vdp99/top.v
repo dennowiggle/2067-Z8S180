@@ -103,16 +103,16 @@ module top (
     // Use VDP VRAM for ROM
     // memory #( .RAM_SIZE(NUM_BOOT_BRAMS*512) ) rom ( .rd_clk(phi), .addr(a), .data(rom_data) );
 
-    // consider debouncing s1_n using hwclk (no other clock possible)
-    wire reset = ~pll_locked;      // assert reset when PLL is starting up & unstable
-    assign reset_n = pll_locked;       // CPU reset
-
+    // Reset the PLL at start-up
     reg pll_reset = 1'b1;
     always @(posedge hwclk)
     begin
         if (pll_reset == 1'b1)
             pll_reset <= 1'b0;
     end
+
+    wire reset = ~pll_locked;       // assert reset when PLL is starting up & unstable
+    assign reset_n = pll_locked;    // CPU reset
 
     // Reload the FPGA when the external switch is pressed or commanded by reset register.
     reg warmboot_now     = 1'b0;
