@@ -11,7 +11,7 @@ FILES= \
 all:: top.bin
 
 top.json: $(FILES)
-	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(COMPILE_OPT) $^
+	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
 
 timing: top.asc
 	icetime -tmd $(DEVICE) $^
