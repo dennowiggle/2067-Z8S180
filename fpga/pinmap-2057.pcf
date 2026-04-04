@@ -1,122 +1,132 @@
-set_io -nowarn -pullup yes  a[0]        23
-set_io -nowarn -pullup yes  a[1]        21
-set_io -nowarn -pullup yes  a[2]        19
-set_io -nowarn -pullup yes  a[3]        17
-set_io -nowarn -pullup yes  a[4]        15
-set_io -nowarn -pullup yes  a[5]        141
-set_io -nowarn -pullup yes  a[6]        138
-set_io -nowarn -pullup yes  a[7]        136
-set_io -nowarn -pullup yes  a[8]        134
-set_io -nowarn -pullup yes  a[9]        129     # may NOT be used as an input when using PLL 2
-set_io -nowarn -pullup yes  a[10]       135
-set_io -nowarn -pullup yes  a[11]       137
-set_io -nowarn -pullup yes  a[12]       139
-set_io -nowarn -pullup yes  a[13]       142
-set_io -nowarn -pullup yes  a[14]       144
-set_io -nowarn -pullup yes  a[15]       16
-set_io -nowarn -pullup yes  a[16]       18
-set_io -nowarn -pullup yes  a[17]       20
-set_io -nowarn -pullup yes  a[18]       22
-set_io -nowarn -pullup yes  a[19]       130
+set_io -nowarn -pullup yes  a[0]        23    # J2.26
+set_io -nowarn -pullup yes  a[1]        21    # J2.28
+set_io -nowarn -pullup yes  a[2]        19    # J2.30
+set_io -nowarn -pullup yes  a[3]        17    # J2.32
+set_io -nowarn -pullup yes  a[4]        15    # J2.34
+set_io -nowarn -pullup yes  a[5]        141   # J2.48
+set_io -nowarn -pullup yes  a[6]        138   # J2.50
+set_io -nowarn -pullup yes  a[7]        136   # J2.52
+set_io -nowarn -pullup yes  a[8]        134   # J2.54
+set_io -nowarn -pullup yes  a[9]        129   # J2.56     # may NOT be used as an input when using PLL 2
+set_io -nowarn -pullup yes  a[10]       135   # J2.53
+set_io -nowarn -pullup yes  a[11]       137   # J2.51
+set_io -nowarn -pullup yes  a[12]       139   # J2.49
+set_io -nowarn -pullup yes  a[13]       142   # J2.47
+set_io -nowarn -pullup yes  a[14]       144   # J2.45
+set_io -nowarn -pullup yes  a[15]       16    # J2.33
+set_io -nowarn -pullup yes  a[16]       18    # J2.31
+set_io -nowarn -pullup yes  a[17]       20    # J2.29
+set_io -nowarn -pullup yes  a[18]       22    # J2.27
+set_io -nowarn -pullup yes  a[19]       130   # J2.55
 
-set_io -nowarn -pullup yes  d[0]        9
-set_io -nowarn -pullup yes  d[1]        7
-set_io -nowarn -pullup yes  d[2]        3
-set_io -nowarn -pullup yes  d[3]        1
-set_io -nowarn -pullup yes  d[4]        2
-set_io -nowarn -pullup yes  d[5]        4
-set_io -nowarn -pullup yes  d[6]        8
-set_io -nowarn -pullup yes  d[7]        10
+set_io -nowarn -pullup yes  d[0]        9     # J2.38
+set_io -nowarn -pullup yes  d[1]        7     # J2.40
+set_io -nowarn -pullup yes  d[2]        3     # J2.42
+set_io -nowarn -pullup yes  d[3]        1     # J2.44
+set_io -nowarn -pullup yes  d[4]        2     # J2.43
+set_io -nowarn -pullup yes  d[5]        4     # J2.41
+set_io -nowarn -pullup yes  d[6]        8     # J2.39
+set_io -nowarn -pullup yes  d[7]        10    # J2.37
 
-set_io -nowarn              busack_n    33
-set_io -nowarn -pullup yes  busreq_n    31
-set_io -nowarn -pullup yes  dreq1_n     49      # may NOT be used as an input when using PLL 1
-set_io -nowarn              e           34
-set_io -nowarn              extal       39
-set_io -nowarn              halt_n      45
+set_io -nowarn              busack_n    33    # J2.18
+set_io -nowarn -pullup yes  busreq_n    31    # J2.20
+set_io -nowarn -pullup yes  dreq1_n     49    # J2.6      # may NOT be used as an input when using PLL 1
+set_io -nowarn              e           34    # J2.17
+set_io -nowarn              extal       39    # J2.14
+set_io -nowarn              halt_n      45    # J2.9
 
-set_io -nowarn -pullup yes  int_n[0]    24
-set_io -nowarn -pullup yes  int_n[1]    26
-set_io -nowarn -pullup yes  int_n[2]    29
-set_io -nowarn -pullup yes  nmi_n       25
+set_io -nowarn -pullup yes  int_n[0]    24    # J2.25
+set_io -nowarn -pullup yes  int_n[1]    26    # J2.23
+set_io -nowarn -pullup yes  int_n[2]    29    # J2.21
+set_io -nowarn -pullup yes  nmi_n       25    # J2.24
 
-set_io -nowarn -pullup yes  mreq_n      38
-set_io -nowarn -pullup yes  iorq_n      41
-set_io -nowarn -pullup yes  rd_n        44
-set_io -nowarn -pullup yes  wr_n        47
+set_io -nowarn -pullup yes  mreq_n      38    # J2.15
+set_io -nowarn -pullup yes  iorq_n      41    # J2.13
+set_io -nowarn -pullup yes  rd_n        44    # J2.10
+set_io -nowarn -pullup yes  wr_n        47    # J2.8
 
-set_io -nowarn              m1_n        55
-set_io -nowarn              phi         42
-set_io -nowarn              rfsh_n      43
-set_io -nowarn              st          32
-set_io -nowarn              tend1_n     48
-set_io -nowarn -pullup yes  wait_n      37
+set_io -nowarn              m1_n        55    # J2.5
+set_io -nowarn              phi         42    # J2.12
+set_io -nowarn              rfsh_n      43    # J2.11
+set_io -nowarn              st          32    # J2.19
+set_io -nowarn              tend1_n     48    # J2.7
+set_io -nowarn -pullup yes  wait_n      37    # J2.16
 
-set_io -nowarn              reset_n     28
+set_io -nowarn              reset_n     28    # J2.22
 
-set_io -nowarn              we_n        143
-set_io -nowarn              oe_n        12
-set_io -nowarn              ce_n        11
+set_io -nowarn              we_n        143   # J2.46
+set_io -nowarn              oe_n        12    # J2.35
+set_io -nowarn              ce_n        11    # J2.36
 
-set_io -nowarn              hwclk       52
+set_io -nowarn              hwclk       52    # 
 
-set_io -nowarn              led[0]      118
-set_io -nowarn              led[1]      116
-set_io -nowarn              led[2]      115
-set_io -nowarn              led[3]      114
-set_io -nowarn              led[4]      113
-set_io -nowarn              led[5]      112
-set_io -nowarn              led[6]      110
-set_io -nowarn              led[7]      107
+set_io -nowarn              led[0]      118   # J1.48
+set_io -nowarn              led[1]      116   # J1.46
+set_io -nowarn              led[2]      115   # J1.45
+set_io -nowarn              led[3]      114   # J1.44
+set_io -nowarn              led[4]      113   # J1.43
+set_io -nowarn              led[5]      112   # J1.42
+set_io -nowarn              led[6]      110   # J1.41
+set_io -nowarn              led[7]      107   # J1.40
 
-set_io -nowarn -pullup yes  s1_n        102
-set_io -nowarn -pullup yes  s2_n        105
+set_io -nowarn -pullup yes  s1_n        102   # J1.36
+set_io -nowarn -pullup yes  s2_n        105   # J1.38
 
 
 # A bunch of pins on the bottom for test-points
-set_io -nowarn              tp[0]       56
-set_io -nowarn              tp[1]       61
-set_io -nowarn              tp[2]       63
-set_io -nowarn              tp[3]       73
-set_io -nowarn              tp[4]       75
-set_io -nowarn              tp[5]       78
-set_io -nowarn              tp[6]       80
-set_io -nowarn              tp[7]       82
-set_io -nowarn              tp[8]       84
-set_io -nowarn              tp[9]       87
-set_io -nowarn              tp[10]      90
-set_io -nowarn              tp[11]      93
-set_io -nowarn              tp[12]      95
-set_io -nowarn              tp[13]      97
-set_io -nowarn              tp[14]      99
-set_io -nowarn              tp[15]      101
+set_io -nowarn              tp[0]       56    # J1.5
+set_io -nowarn              tp[1]       61    # J1.7
+set_io -nowarn              tp[2]       63    # J1.10
+set_io -nowarn              tp[3]       73    # J1.11
+set_io -nowarn              tp[4]       75    # J1.13
+set_io -nowarn              tp[5]       78    # J1.15
+set_io -nowarn              tp[6]       80    # J1.17
+set_io -nowarn              tp[7]       82    # J1.19
+set_io -nowarn              tp[8]       84    # J1.21
+set_io -nowarn              tp[9]       87    # J1.23
 
 # built-in SD card pins
-set_io -nowarn              sd_mosi     119
-set_io -nowarn              sd_clk      124
-set_io -nowarn              sd_ssel_n   117
+set_io -nowarn              sd_mosi     119   # J1.51
+set_io -nowarn              sd_clk      124   # J1.55
+set_io -nowarn              sd_ssel_n   117   # J1.49
 
-set_io -nowarn -pullup yes  sd_miso     121
-set_io -nowarn -pullup yes  sd_det      125
+set_io -nowarn -pullup yes  sd_miso     121   # J1.53
+set_io -nowarn -pullup yes  sd_det      125   # J1.54
 
-# VGA interface pins                            DAC resistor values
-set_io -nowarn              vga_red[0]     120  # 1K
-set_io -nowarn              vga_red[1]     98   # 470
-set_io -nowarn              vga_grn[0]     122  # 1K
-set_io -nowarn              vga_grn[1]     96   # 470
-set_io -nowarn              vga_blu[0]     128  # 1K
-set_io -nowarn              vga_blu[1]     94   # 470
+# VGA interface pins                                      DAC resistor values
+set_io -nowarn              vga_red[0]  120   # J1.50   # 1K
+set_io -nowarn              vga_red[1]  98    # J1.34   # 470
+set_io -nowarn              vga_grn[0]  122   # J1.52   # 1K
+set_io -nowarn              vga_grn[1]  96    # J1.32   # 470
+set_io -nowarn              vga_blu[0]  128   # J1.56   # 1K
+set_io -nowarn              vga_blu[1]  94    # J1.30   # 470
 
-set_io -nowarn              vga_hsync   104     # 100
-set_io -nowarn              vga_vsync   106     # 100
+set_io -nowarn              vga_hsync   104   # J1.37   # 100
+set_io -nowarn              vga_vsync   106   # J1.39   # 100
 
-set_io -nowarn -pullup yes	joy1_up		74
-set_io -nowarn -pullup yes	joy1_dn		64
-set_io -nowarn -pullup yes	joy1_lt		60
-set_io -nowarn -pullup yes	joy1_rt		62
-set_io -nowarn -pullup yes	joy1_fire	76
-set_io -nowarn -pullup yes	joy1_btn2	79
+set_io -nowarn -pullup yes	joy1_up		74    # J1.14
+set_io -nowarn -pullup yes	joy1_dn		64    # J1.12
+set_io -nowarn -pullup yes	joy1_lt		60    # J1.8
+set_io -nowarn -pullup yes	joy1_rt		62    # J1.10
+set_io -nowarn -pullup yes	joy1_fire	76    # J1.16
+set_io -nowarn -pullup yes	joy1_btn2	79    # J1.18
 
-set_io -nowarn				aout[0]		91
-set_io -nowarn				aout[1]		88
-set_io -nowarn				aout[2]		85
+set_io -nowarn				aout[0]		91    # J1.28
+set_io -nowarn				aout[1]		88    # J1.26
+set_io -nowarn				aout[2]		85    # J1.24
+
+# SPI Flash pins
+set_io -nowarn              flash_clk   70    # 
+set_io -nowarn              flash_mosi  68    # 
+set_io -nowarn              flash_miso  67    # 
+set_io -nowarn              flash_cs    71    # 
+
+# User gpio pins
+set_io -nowarn -pullup no   user_gpio[0]    81  # J1.20
+set_io -nowarn -pullup no   user_gpio[1]    83  # J1.22
+set_io -nowarn -pullup no   user_gpio[2]    90  # J1.25
+set_io -nowarn -pullup no   user_gpio[3]    93  # J1.27
+set_io -nowarn -pullup no   user_gpio[4]    95  # J1.29
+set_io -nowarn -pullup no   user_gpio[5]    97  # J1.31
+set_io -nowarn -pullup no   user_gpio[6]    99  # J1.33
+set_io -nowarn -pullup no   user_gpio[7]    101 # J1.35

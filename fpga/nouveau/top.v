@@ -64,7 +64,7 @@ module top (
     input wire          sd_miso,
     input wire          sd_det,
 
-    output wire [15:0]  tp          // handy-dandy test-point outputs
+    output wire [9:0]  tp          // handy-dandy test-point outputs
  
     );
  

@@ -1,12 +1,16 @@
 TOP=..
 
 VERILOG_TB_DEFINES = -DNO_INIT_VRAM
+# Option to connect user_gpio to the led's for test purposes.
+#VERILOG_DEFINES =
+VERILOG_DEFINES = -DUSE_LED_COPY_USER_GPIO
 
 LIB_VDP99=$(TOP)/vdp99
 LIB_UTILS=$(TOP)/lib
 
 include $(TOP)/Make.rules
 #FREQ		= 110	# test for fun
+
 
 .PHONY: prog
 
@@ -32,7 +36,7 @@ FILES=\
 all:: multi.bin
 
 top.json: $(FILES) rom.hex
-	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
+	$(COMPILE.v) $(VERILOG_DEFINES) -p "$(SYNTH) -top top -json $@" $(FILES) $(COMPILE_OPT)
 
 timing: top.asc
 	icetime -tmd $(DEVICE) $^

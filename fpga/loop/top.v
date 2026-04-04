@@ -57,7 +57,7 @@ module top (
     input wire          tend1_n,
     output wire         wait_n,
 
-    output wire [15:0]  tp          // handy-dandy test-point outputs
+    output wire [9:0]   tp          // handy-dandy test-point outputs
 
     );
 

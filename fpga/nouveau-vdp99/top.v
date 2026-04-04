@@ -73,15 +73,17 @@ module top (
     input wire          joy1_fire,
     input wire          joy1_btn2,
 
-    output  wire [1:0]  vga_red,
-    output  wire [1:0]  vga_grn,
-    output  wire [1:0]  vga_blu,
-    output  wire        vga_hsync,
-    output  wire        vga_vsync,
+    output wire  [1:0]  vga_red,
+    output wire  [1:0]  vga_grn,
+    output wire  [1:0]  vga_blu,
+    output wire         vga_hsync,
+    output wire         vga_vsync,
 
-    output  wire [2:0]  aout,       // hack for testing the AY-3-891x
+    output wire  [2:0]  aout,       // hack for testing the AY-3-891x
 
-    output wire [15:0]  tp          // handy-dandy test-point outputs
+    inout  wire  [7:0]  user_gpio,
+
+    output wire [9:0]   tp          // handy-dandy test-point outputs
     );
 
     wire [7:0] vdp_dout;
@@ -89,8 +91,8 @@ module top (
 
     localparam RAM_START = 20'h1000;
 
-    assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
-    //            93            90            87   84 82      80    78    75    73    63    61      56
+    assign tp = { phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
+    //            87   84 82      80    78    75    73    63    61      56
 
 
     localparam HWCLK_FREQ       = 25000000;
@@ -154,12 +156,13 @@ module top (
         case (1)
         // Rom read through VRAM so following line commented out
         // mreq_rom:       dout = vdp_dout;            // boot ROM memory from VRAM
-        ioreq_rd_f0:    dout = ioreq_rd_data;       // gpio input
-        ioreq_rd_j3:    dout = ioreq_rd_data;       // J3 input
-        ioreq_rd_j4:    dout = ioreq_rd_data;       // J4 input
-        ioreq_rd_ay:    dout = ay_dout;       		// ay-3-8910
-        ioreq_rd_vdp:   dout = vdp_dout;            // data from the VDP
-        default:        dbus_out = 0;
+        ioreq_rd_f0:        dout = ioreq_rd_data;       // gpio input
+        ioreq_rd_j3:        dout = ioreq_rd_data;       // J3 input
+        ioreq_rd_j4:        dout = ioreq_rd_data;       // J4 input
+        ioreq_rd_ay:        dout = ay_dout;       		// ay-3-8910
+        ioreq_rd_vdp:       dout = vdp_dout;            // data from the VDP
+        ioreq_rd_user_gpio: dout = user_gpio_dout;      // data from the user GPIO port
+        default:            dbus_out = 0;
         endcase
     end
 
@@ -332,7 +335,54 @@ module top (
     );
 `endif
 
-    // show some signals from the GPIO ports on the LEDs for reference
+    // User GPIO port
+    wire [7:0] user_gpio_dout;
+    wire [7:0] user_gpio_in;
+    wire [7:0] user_gpio_out;
+    wire [7:0] user_gpio_oe;
+    
+    wire ioreq_rd_user_gpio      = iorq_rd &&      (a[7:3] == 7'b11000);  // true for ports C0 to C7
+    wire ioreq_rd_user_gpio_tick = iorq_rd_tick && (a[7:3] == 7'b11000);  // true for ports C0 to C7
+
+    // wire ioreq_wr_user_gpio = iorq_wr && (a[7:3] == 7'b11000);  // true for ports C0 to C7
+    wire ioreq_wr_user_gpio_tick = iorq_wr_tick && (a[7:3] == 7'b11000);  // true for ports C0 to C7
+
+    gpio #() gpio_inst (
+        .reset          (reset),
+        .cpu_clock      (phi),
+        .reg_addr       (a[2:0]),
+        .cpu_din        (d),
+        .cpu_dout       (user_gpio_dout),
+        .cpu_wr_tick    (ioreq_wr_user_gpio_tick),
+        .cpu_rd_tick    (ioreq_rd_user_gpio_tick),
+        .gpio_in        (user_gpio_in),
+        .gpio_out       (user_gpio_out),
+        .gpio_oe        (user_gpio_oe)
+    );
+ 
+    // Set up user GPIO pins as input (Z) or output
+    assign user_gpio[7] = user_gpio_oe[7] ? user_gpio_out[7] : 1'bz;
+    assign user_gpio[6] = user_gpio_oe[6] ? user_gpio_out[6] : 1'bz;
+    assign user_gpio[5] = user_gpio_oe[5] ? user_gpio_out[5] : 1'bz;
+    assign user_gpio[4] = user_gpio_oe[4] ? user_gpio_out[4] : 1'bz;
+    assign user_gpio[3] = user_gpio_oe[3] ? user_gpio_out[3] : 1'bz;
+    assign user_gpio[2] = user_gpio_oe[2] ? user_gpio_out[2] : 1'bz;
+    assign user_gpio[1] = user_gpio_oe[1] ? user_gpio_out[1] : 1'bz;
+    assign user_gpio[0] = user_gpio_oe[0] ? user_gpio_out[0] : 1'bz;
+
+    assign user_gpio_in = user_gpio;
+
+    // For test purposes it can be helpful to show the user GPIO output
+    // on the LED's.
+`ifdef USE_LED_COPY_USER_GPIO
+    // reverse the LED's if viewing LED's in a vertical stack.
+    // ON  => gpio pin = high.
+    // OFF => gpio pin = low.
+    assign led = {~user_gpio[0], ~user_gpio[1], ~user_gpio[2], ~user_gpio[3], 
+                  ~user_gpio[4], ~user_gpio[5], ~user_gpio[6], ~user_gpio[7]};
+`else
+    // show some signals from the FPGA IO pins on the LEDs for reference
     assign led = {~sd_miso,sd_det,3'b111,~gpio_out[2:0]};
+`endif
 
 endmodule

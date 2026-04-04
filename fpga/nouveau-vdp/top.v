@@ -70,14 +70,14 @@ module top (
     output  wire        vga_hsync,
     output  wire        vga_vsync,
 
-    output wire [15:0]  tp          // handy-dandy test-point outputs
+    output wire [9:0]  tp          // handy-dandy test-point outputs
     );
 
     localparam RAM_START = 20'h1000;
 
     // note that the test points here are different from the previous test proggies
-    assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
-    //            93            90            87   84 82      80    78    75    73    63    61      56
+    assign tp = { phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
+    //            87   84 82      80    78    75    73    63    61      56
 
     // a boot ROM
     wire [7:0]  rom_data;           // ROM output data bus

@@ -5,7 +5,8 @@ SUBDIRS = \
 	iorq \
 	stretcher \
 	prescaler \
-	crc
+	crc \
+	gpio
 
 -include  $(TOP)/Make.local
 include $(TOP)/Make.rules

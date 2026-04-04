@@ -57,7 +57,7 @@ module top (
     input wire          tend1_n,    // Z8S180 /TEND1
     output wire         wait_n,     // Z8S180 /WAIT
 
-    output wire [15:0]  tp          // handy-dandy test-points on the 2057 FPGA board
+    output wire [9:0]   tp          // handy-dandy test-point outputs
     );
  
     assign tp = { st, rfsh_n, wr_n, rd_n, iorq_n, mreq_n, m1_n, phi, extal };
